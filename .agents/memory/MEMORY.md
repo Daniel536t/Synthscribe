@@ -1,0 +1,2 @@
+- [DB project-reference rebuild](db-project-references.md) — after editing `lib/db` schema, rebuild its declarations or api-server typecheck fails with stale "no exported member" (esbuild/runtime unaffected).
+- [ElevenLabs on the server](elevenlabs-server.md) — server must call ElevenLabs HTTP directly with the ELEVENLABS_API_KEY secret; the code_execution callback only works in the sandbox.

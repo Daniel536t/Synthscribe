@@ -1,0 +1,187 @@
+import { eq } from "drizzle-orm";
+import { db, projectsTable } from "@workspace/db";
+import { logger } from "./logger";
+import { uploadBuffer, downloadToBuffer } from "./storage";
+import {
+  normalizeHum,
+  toWav,
+  mixAndMaster,
+  getDurationSeconds,
+  type MixInput,
+} from "./audio";
+import { transcribeHum } from "./transcribe";
+import { generateBacking, generateVocals } from "./elevenlabs";
+import { modalConfigured, generateBackingFromHum } from "./musicgen";
+
+type Stage =
+  | "draft"
+  | "transcribing"
+  | "generating_backing"
+  | "singing"
+  | "mixing"
+  | "complete"
+  | "error";
+
+interface PatchFields {
+  stage?: Stage;
+  progress?: number;
+  message?: string | null;
+  key?: string | null;
+  tempo?: number | null;
+  durationSeconds?: number | null;
+  error?: string | null;
+  humPath?: string | null;
+  backingPath?: string | null;
+  vocalsPath?: string | null;
+  finalPath?: string | null;
+}
+
+async function patch(projectId: string, fields: PatchFields): Promise<void> {
+  await db.update(projectsTable).set(fields).where(eq(projectsTable.id, projectId));
+}
+
+const DEFAULT_DURATION = 24; // seconds for generated stems
+
+export async function runPipeline(projectId: string): Promise<void> {
+  const log = logger.child({ projectId });
+  try {
+    const [project] = await db
+      .select()
+      .from(projectsTable)
+      .where(eq(projectsTable.id, projectId));
+    if (!project) throw new Error("Project not found");
+    if (!project.humPath) throw new Error("No hum uploaded");
+
+    // 1. Transcribe -------------------------------------------------------
+    await patch(projectId, {
+      stage: "transcribing",
+      progress: 15,
+      message: "Listening to your melody",
+      error: null,
+    });
+    const humRaw = await downloadToBuffer(project.humPath);
+    const hum = await normalizeHum(humRaw);
+    const humNormPath = await uploadBuffer(
+      `synthscribe/${projectId}/hum.wav`,
+      hum,
+      "audio/wav",
+    );
+    const transcription = await transcribeHum(hum);
+    const key = transcription.key ?? "C major";
+    const tempo = transcription.tempo ?? 90;
+    const humDuration = transcription.durationSeconds ?? (await getDurationSeconds(hum));
+    const targetDuration = Math.max(16, Math.min(Math.round(humDuration * 3) || DEFAULT_DURATION, 40));
+    await patch(projectId, {
+      humPath: humNormPath,
+      key,
+      tempo,
+      progress: 30,
+      message: `Detected ${key} at ${Math.round(tempo)} BPM`,
+    });
+
+    // 2. Backing track ----------------------------------------------------
+    await patch(projectId, {
+      stage: "generating_backing",
+      progress: 45,
+      message: modalConfigured()
+        ? "Composing music around your hum"
+        : "Producing your backing track",
+    });
+    let backing: Buffer;
+    if (modalConfigured()) {
+      try {
+        const raw = await generateBackingFromHum({
+          hum,
+          vibe: project.vibe,
+          durationSeconds: targetDuration,
+        });
+        backing = await toWav(raw);
+      } catch (err) {
+        log.warn({ err }, "Modal backing failed, falling back to ElevenLabs");
+        const raw = await generateBacking({
+          vibe: project.vibe,
+          key,
+          tempo,
+          lengthMs: targetDuration * 1000,
+        });
+        backing = await toWav(raw);
+      }
+    } else {
+      const raw = await generateBacking({
+        vibe: project.vibe,
+        key,
+        tempo,
+        lengthMs: targetDuration * 1000,
+      });
+      backing = await toWav(raw);
+    }
+    const backingPath = await uploadBuffer(
+      `synthscribe/${projectId}/backing.wav`,
+      backing,
+      "audio/wav",
+    );
+    await patch(projectId, { backingPath, progress: 65 });
+
+    // 3. Vocals (best effort) --------------------------------------------
+    await patch(projectId, {
+      stage: "singing",
+      progress: 72,
+      message: "Adding a vocal layer",
+    });
+    let vocals: Buffer | null = null;
+    let vocalsPath: string | null = null;
+    try {
+      const raw = await generateVocals({
+        vibe: project.vibe,
+        key,
+        tempo,
+        lengthMs: targetDuration * 1000,
+      });
+      vocals = await toWav(raw);
+      vocalsPath = await uploadBuffer(
+        `synthscribe/${projectId}/vocals.wav`,
+        vocals,
+        "audio/wav",
+      );
+      await patch(projectId, { vocalsPath, progress: 82 });
+    } catch (err) {
+      log.warn({ err }, "Vocal layer failed, continuing without it");
+      await patch(projectId, { progress: 82 });
+    }
+
+    // 4. Mix & master -----------------------------------------------------
+    await patch(projectId, {
+      stage: "mixing",
+      progress: 90,
+      message: "Mixing and mastering",
+    });
+    const inputs: MixInput[] = [{ buffer: backing, gain: 0.9 }];
+    inputs.push({ buffer: hum, gain: 0.85, reverb: true });
+    if (vocals) inputs.push({ buffer: vocals, gain: 0.6 });
+    const master = await mixAndMaster(inputs);
+    const finalPath = await uploadBuffer(
+      `synthscribe/${projectId}/final.wav`,
+      master,
+      "audio/wav",
+    );
+    const finalDuration = await getDurationSeconds(master);
+
+    await patch(projectId, {
+      stage: "complete",
+      progress: 100,
+      message: "Your song is ready",
+      finalPath,
+      durationSeconds: finalDuration,
+      error: null,
+    });
+    log.info("Pipeline complete");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Generation failed";
+    logger.error({ err, projectId }, "Pipeline failed");
+    await patch(projectId, {
+      stage: "error",
+      message: "Something went wrong while making your song",
+      error: message,
+    });
+  }
+}
