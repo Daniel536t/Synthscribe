@@ -7,7 +7,7 @@
  */
 
 /**
- * Which engine produces the backing track. "musicgen" (default) is the Modal MusicGen-melody GPU worker, conditioned on the hum so the band follows the real tune. "elevenlabs" uses the premium ElevenLabs Music model. "arranger" and "gpu" are legacy values kept only so older projects still deserialize; they are not offered in the UI.
+ * Which engine produced the backing track. "elevenlabs" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. "musicgen", "arranger", and "gpu" are legacy values kept only so older projects still deserialize; they are no longer offered.
  */
 export type Engine = typeof Engine[keyof typeof Engine];
 

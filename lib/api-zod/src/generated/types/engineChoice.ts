@@ -7,12 +7,11 @@
  */
 
 /**
- * Engine a user may choose when creating a project. Only the two currently-offered engines are valid; legacy values ("arranger", "gpu") are not accepted for new projects.
+ * Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values ("musicgen", "arranger", "gpu") are not accepted for new projects.
  */
 export type EngineChoice = typeof EngineChoice[keyof typeof EngineChoice];
 
 
 export const EngineChoice = {
-  musicgen: 'musicgen',
   elevenlabs: 'elevenlabs',
 } as const;

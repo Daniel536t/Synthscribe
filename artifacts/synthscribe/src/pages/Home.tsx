@@ -3,13 +3,13 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Vibe, EngineChoice } from "@workspace/api-client-react";
+import { Vibe } from "@workspace/api-client-react";
 import { useCreateProject, useUploadHum, useStartGeneration, useListProjects } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Sparkles, Wand2, Loader2, Headphones, Flower2, Heart, Piano, Guitar, Drum, Radio, Cpu, AudioLines } from "lucide-react";
+import { Music, Sparkles, Wand2, Loader2, Headphones, Flower2, Heart, Piano, Guitar, Drum, Radio } from "lucide-react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "wouter";
@@ -17,7 +17,6 @@ import { Link } from "wouter";
 const formSchema = z.object({
   title: z.string().optional(),
   vibe: z.nativeEnum(Vibe),
-  engine: z.nativeEnum(EngineChoice),
 });
 
 export default function Home() {
@@ -34,7 +33,6 @@ export default function Home() {
     defaultValues: {
       title: "",
       vibe: "pop",
-      engine: "musicgen",
     },
   });
 
@@ -49,7 +47,7 @@ export default function Home() {
     try {
       // 1. Create project
       const project = await createProject.mutateAsync({
-        data: { title: values.title || "My Hummed Melody", vibe: values.vibe, engine: values.engine }
+        data: { title: values.title || "My Hummed Melody", vibe: values.vibe }
       });
 
       // 2. Upload hum
@@ -83,11 +81,6 @@ export default function Home() {
     { value: "folk", label: "Folk", icon: <Guitar className="w-5 h-5" />, color: "bg-lime-500" },
     { value: "afrobeat", label: "Afrobeat", icon: <Drum className="w-5 h-5" />, color: "bg-red-500" },
     { value: "synthwave", label: "Synthwave", icon: <Radio className="w-5 h-5" />, color: "bg-fuchsia-500" },
-  ];
-
-  const engines: { value: EngineChoice; label: string; icon: React.ReactNode; description: string }[] = [
-    { value: "musicgen", label: "MusicGen", icon: <Cpu className="w-5 h-5" />, description: "GPU band that follows your hummed tune" },
-    { value: "elevenlabs", label: "ElevenLabs", icon: <AudioLines className="w-5 h-5" />, description: "Premium AI band (richer, uses credits)" },
   ];
 
   return (
@@ -178,46 +171,6 @@ export default function Home() {
                                   {v.icon}
                                 </div>
                                 <span className="font-semibold text-sm">{v.label}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="engine"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base font-semibold mb-1 block">Backing engine</FormLabel>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Pick which model produces the band. Your hummed melody stays on top either way — generate with both to compare.
-                      </p>
-                      <FormControl>
-                        <div className="grid grid-cols-2 gap-3">
-                          {engines.map((e) => (
-                            <div
-                              key={e.value}
-                              className={`relative cursor-pointer rounded-2xl border-2 transition-all duration-200 ${
-                                field.value === e.value
-                                  ? "border-primary bg-primary/10 shadow-md shadow-primary/20 scale-[1.02]"
-                                  : "border-transparent bg-muted/50 hover:bg-muted"
-                              }`}
-                              onClick={() => field.onChange(e.value)}
-                              data-testid={`engine-${e.value}`}
-                            >
-                              <div className="p-4 flex items-center gap-3">
-                                <div className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white shadow-inner bg-primary">
-                                  {e.icon}
-                                </div>
-                                <div className="text-left">
-                                  <div className="font-semibold text-sm">{e.label}</div>
-                                  <div className="text-xs text-muted-foreground">{e.description}</div>
-                                </div>
                               </div>
                             </div>
                           ))}

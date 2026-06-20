@@ -32,7 +32,7 @@ export const Vibe = {
 } as const;
 
 /**
- * Which engine produces the backing track. "musicgen" (default) is the Modal MusicGen-melody GPU worker, conditioned on the hum so the band follows the real tune. "elevenlabs" uses the premium ElevenLabs Music model. "arranger" and "gpu" are legacy values kept only so older projects still deserialize; they are not offered in the UI.
+ * Which engine produced the backing track. "elevenlabs" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. "musicgen", "arranger", and "gpu" are legacy values kept only so older projects still deserialize; they are no longer offered.
  */
 export type Engine = typeof Engine[keyof typeof Engine];
 
@@ -45,13 +45,12 @@ export const Engine = {
 } as const;
 
 /**
- * Engine a user may choose when creating a project. Only the two currently-offered engines are valid; legacy values ("arranger", "gpu") are not accepted for new projects.
+ * Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values ("musicgen", "arranger", "gpu") are not accepted for new projects.
  */
 export type EngineChoice = typeof EngineChoice[keyof typeof EngineChoice];
 
 
 export const EngineChoice = {
-  musicgen: 'musicgen',
   elevenlabs: 'elevenlabs',
 } as const;
 

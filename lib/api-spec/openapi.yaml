@@ -192,7 +192,7 @@ components:
         - synthwave
     Engine:
       type: string
-      description: Which engine produces the backing track. "musicgen" (default) is the Modal MusicGen-melody GPU worker, conditioned on the hum so the band follows the real tune. "elevenlabs" uses the premium ElevenLabs Music model. "arranger" and "gpu" are legacy values kept only so older projects still deserialize; they are not offered in the UI.
+      description: Which engine produced the backing track. "elevenlabs" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. "musicgen", "arranger", and "gpu" are legacy values kept only so older projects still deserialize; they are no longer offered.
       enum:
         - musicgen
         - elevenlabs
@@ -200,9 +200,8 @@ components:
         - gpu
     EngineChoice:
       type: string
-      description: Engine a user may choose when creating a project. Only the two currently-offered engines are valid; legacy values ("arranger", "gpu") are not accepted for new projects.
+      description: Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values ("musicgen", "arranger", "gpu") are not accepted for new projects.
       enum:
-        - musicgen
         - elevenlabs
     PipelineStage:
       type: string

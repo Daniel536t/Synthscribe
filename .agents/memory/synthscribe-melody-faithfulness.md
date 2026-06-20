@@ -12,9 +12,10 @@ called the second "trash":
    (with a touch of reverb, gain ~0.85) is layered on top of the AI backing
    (gain ~0.9) in `pipeline.ts` step 4. Because the hum is short and the song is
    ~3x longer, the hum **"calls out" at the start and then melts into the band**.
-   This is the original, loved SynthScribe sound. MusicGen also conditions on the
-   *raw hum's* chroma so the bed loosely follows the tune; ElevenLabs ignores the
-   hum (text-prompt only) but the raw hum on top still carries the user's idea.
+   This is the original, loved SynthScribe sound. The ElevenLabs bed ignores the
+   hum (text-prompt only, from the detected vibe/key/tempo), but the raw hum on
+   top still carries the user's idea. (Note: the app is now ElevenLabs-only — the
+   MusicGen hum-conditioning path was removed; see synthscribe-engine-coupling.md.)
 
 2. **(REJECTED) Clean resynth lead.** Transcribe the hum (pyin) → render a clean
    additive-synth lead WAV → use that lead both to condition MusicGen and as the

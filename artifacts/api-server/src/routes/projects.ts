@@ -37,10 +37,10 @@ const VIBES = new Set([
   "synthwave",
 ]);
 
-// New projects pick one of two engines. Legacy values ("gpu", "arranger") are
-// no longer accepted for new rows but are still tolerated by the pipeline when
-// re-running old projects.
-const ENGINES = new Set(["musicgen", "elevenlabs"]);
+// SynthScribe uses a single backing engine: ElevenLabs Music. Legacy values
+// ("gpu", "arranger", "musicgen") may still exist on old rows but are no longer
+// accepted for new projects.
+const ENGINES = new Set(["elevenlabs"]);
 
 const IN_PROGRESS = new Set([
   "transcribing",
@@ -64,7 +64,7 @@ router.post("/projects", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Invalid vibe" });
     return;
   }
-  const engine = parsed.data.engine ?? "musicgen";
+  const engine = parsed.data.engine ?? "elevenlabs";
   if (!ENGINES.has(engine)) {
     res.status(400).json({ error: "Invalid engine" });
     return;

@@ -11,7 +11,6 @@ import {
 } from "./audio";
 import { transcribeHum } from "./transcribe";
 import { generateBacking, generateVocals } from "./elevenlabs";
-import { modalConfigured, generateBackingFromHum } from "./musicgen";
 
 type Stage =
   | "draft"
@@ -48,13 +47,6 @@ const DEFAULT_DURATION = 24; // seconds for generated stems
 function vocalsEnabled(): boolean {
   const v = (process.env.SYNTHSCRIBE_ENABLE_VOCALS ?? "").trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
-}
-
-// Resolve the stored engine value to a concrete backing path. New rows store
-// "musicgen" or "elevenlabs"; old rows may still hold the legacy "gpu"
-// (treated as musicgen) or "arranger" (the retired studio band -> elevenlabs).
-function useGpuEngine(engine: string): boolean {
-  return engine === "musicgen" || engine === "gpu";
 }
 
 export async function runPipeline(projectId: string): Promise<void> {
@@ -101,46 +93,21 @@ export async function runPipeline(projectId: string): Promise<void> {
       message: `Detected ${key} at ${Math.round(tempo)} BPM`,
     });
 
-    // 2. Backing track ----------------------------------------------------
-    // The user picks the backing engine per generation:
-    //   - "musicgen" (default): the Modal MusicGen-melody GPU worker, which
-    //     conditions on the hum's chroma so the band follows the real tune.
-    //   - "elevenlabs": the premium ElevenLabs Music model (prompted with the
-    //     detected vibe/key/tempo).
-    // MusicGen falls back to ElevenLabs if the GPU worker is unavailable.
-    const useGpu = useGpuEngine(project.engine) && modalConfigured();
+    // 2. Backing track (ElevenLabs Music) ---------------------------------
+    // The backing is produced by the ElevenLabs Music model, prompted with the
+    // detected vibe/key/tempo. The user's own hum is layered on top in step 4.
     await patch(projectId, {
       stage: "generating_backing",
       progress: 50,
-      message: useGpu
-        ? "Composing music around your hum"
-        : "Producing your backing track",
+      message: "Producing your backing track",
     });
-    const elevenlabsBacking = async (): Promise<Buffer> => {
-      const raw = await generateBacking({
-        vibe: project.vibe,
-        key,
-        tempo,
-        lengthMs: targetDuration * 1000,
-      });
-      return toWav(raw);
-    };
-    let backing: Buffer;
-    if (useGpu) {
-      try {
-        const raw = await generateBackingFromHum({
-          hum,
-          vibe: project.vibe,
-          durationSeconds: targetDuration,
-        });
-        backing = await toWav(raw);
-      } catch (err) {
-        log.warn({ err }, "Modal backing failed, falling back to ElevenLabs");
-        backing = await elevenlabsBacking();
-      }
-    } else {
-      backing = await elevenlabsBacking();
-    }
+    const backingRaw = await generateBacking({
+      vibe: project.vibe,
+      key,
+      tempo,
+      lengthMs: targetDuration * 1000,
+    });
+    const backing = await toWav(backingRaw);
     const backingPath = await uploadBuffer(
       `synthscribe/${projectId}/backing.wav`,
       backing,
