@@ -101,15 +101,30 @@ export async function runPipeline(projectId: string): Promise<void> {
     });
 
     // 2. Backing track ----------------------------------------------------
+    // The user picks the backing engine per generation: "gpu" runs the Modal
+    // MusicGen-melody worker (with a graceful ElevenLabs fallback), while
+    // "elevenlabs" always uses ElevenLabs Music even when Modal is configured.
+    // The transcribed melody lead is layered on top in both modes (see 2b), so
+    // only the backing bed differs between engines.
+    const useGpu = project.engine === "gpu" && modalConfigured();
     await patch(projectId, {
       stage: "generating_backing",
       progress: 45,
-      message: modalConfigured()
+      message: useGpu
         ? "Composing music around your hum"
         : "Producing your backing track",
     });
+    const elevenlabsBacking = async (): Promise<Buffer> => {
+      const raw = await generateBacking({
+        vibe: project.vibe,
+        key,
+        tempo,
+        lengthMs: targetDuration * 1000,
+      });
+      return toWav(raw);
+    };
     let backing: Buffer;
-    if (modalConfigured()) {
+    if (useGpu) {
       try {
         const raw = await generateBackingFromHum({
           hum,
@@ -119,22 +134,10 @@ export async function runPipeline(projectId: string): Promise<void> {
         backing = await toWav(raw);
       } catch (err) {
         log.warn({ err }, "Modal backing failed, falling back to ElevenLabs");
-        const raw = await generateBacking({
-          vibe: project.vibe,
-          key,
-          tempo,
-          lengthMs: targetDuration * 1000,
-        });
-        backing = await toWav(raw);
+        backing = await elevenlabsBacking();
       }
     } else {
-      const raw = await generateBacking({
-        vibe: project.vibe,
-        key,
-        tempo,
-        lengthMs: targetDuration * 1000,
-      });
-      backing = await toWav(raw);
+      backing = await elevenlabsBacking();
     }
     const backingPath = await uploadBuffer(
       `synthscribe/${projectId}/backing.wav`,

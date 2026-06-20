@@ -37,6 +37,8 @@ const VIBES = new Set([
   "synthwave",
 ]);
 
+const ENGINES = new Set(["gpu", "elevenlabs"]);
+
 const IN_PROGRESS = new Set([
   "transcribing",
   "generating_backing",
@@ -59,6 +61,11 @@ router.post("/projects", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Invalid vibe" });
     return;
   }
+  const engine = parsed.data.engine ?? "gpu";
+  if (!ENGINES.has(engine)) {
+    res.status(400).json({ error: "Invalid engine" });
+    return;
+  }
   const title = parsed.data.title?.trim() || "Untitled song";
   const [row] = await db
     .insert(projectsTable)
@@ -66,6 +73,7 @@ router.post("/projects", async (req, res): Promise<void> => {
       id: randomUUID(),
       title,
       vibe: parsed.data.vibe,
+      engine,
       stage: "draft",
       progress: 0,
     })

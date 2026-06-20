@@ -24,6 +24,7 @@ export const ListProjectsResponseItem = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "engine": zod.enum(['gpu', 'elevenlabs']).describe('Which engine produces the backing track. \"gpu\" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); \"elevenlabs\" always uses ElevenLabs Music.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),
@@ -47,7 +48,8 @@ export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
  */
 export const CreateProjectBody = zod.object({
   "title": zod.string().optional(),
-  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.')
+  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "engine": zod.enum(['gpu', 'elevenlabs']).optional().describe('Which engine produces the backing track. \"gpu\" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); \"elevenlabs\" always uses ElevenLabs Music.')
 })
 
 
@@ -62,6 +64,7 @@ export const GetProjectResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "engine": zod.enum(['gpu', 'elevenlabs']).describe('Which engine produces the backing track. \"gpu\" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); \"elevenlabs\" always uses ElevenLabs Music.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),
@@ -95,6 +98,7 @@ export const UploadHumResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "engine": zod.enum(['gpu', 'elevenlabs']).describe('Which engine produces the backing track. \"gpu\" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); \"elevenlabs\" always uses ElevenLabs Music.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),

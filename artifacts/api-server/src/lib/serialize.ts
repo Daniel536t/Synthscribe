@@ -15,6 +15,7 @@ export function toProject(row: ProjectRow) {
     id: row.id,
     title: row.title,
     vibe: row.vibe,
+    engine: row.engine,
     stage: row.stage,
     progress: row.progress,
     key: row.key,

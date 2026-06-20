@@ -5,9 +5,11 @@
  * SynthScribe API — turn a hummed melody into a fully produced song.
  * OpenAPI spec version: 0.1.0
  */
+import type { Engine } from './engine';
 import type { Vibe } from './vibe';
 
 export interface CreateProjectRequest {
   title?: string;
   vibe: Vibe;
+  engine?: Engine;
 }

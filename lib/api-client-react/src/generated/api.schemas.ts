@@ -32,6 +32,17 @@ export const Vibe = {
 } as const;
 
 /**
+ * Which engine produces the backing track. "gpu" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); "elevenlabs" always uses ElevenLabs Music.
+ */
+export type Engine = typeof Engine[keyof typeof Engine];
+
+
+export const Engine = {
+  gpu: 'gpu',
+  elevenlabs: 'elevenlabs',
+} as const;
+
+/**
  * Current stage of the hum-to-song pipeline.
  */
 export type PipelineStage = typeof PipelineStage[keyof typeof PipelineStage];
@@ -50,6 +61,7 @@ export const PipelineStage = {
 export interface CreateProjectRequest {
   title?: string;
   vibe: Vibe;
+  engine?: Engine;
 }
 
 /**
@@ -70,6 +82,7 @@ export interface Project {
   id: string;
   title: string;
   vibe: Vibe;
+  engine: Engine;
   stage: PipelineStage;
   /** Coarse progress percentage (0-100). */
   progress: number;

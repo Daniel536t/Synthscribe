@@ -190,6 +190,12 @@ components:
         - folk
         - afrobeat
         - synthwave
+    Engine:
+      type: string
+      description: Which engine produces the backing track. "gpu" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); "elevenlabs" always uses ElevenLabs Music.
+      enum:
+        - gpu
+        - elevenlabs
     PipelineStage:
       type: string
       description: Current stage of the hum-to-song pipeline.
@@ -208,6 +214,8 @@ components:
           type: string
         vibe:
           $ref: "#/components/schemas/Vibe"
+        engine:
+          $ref: "#/components/schemas/Engine"
       required:
         - vibe
     AudioUrls:
@@ -236,6 +244,8 @@ components:
           type: string
         vibe:
           $ref: "#/components/schemas/Vibe"
+        engine:
+          $ref: "#/components/schemas/Engine"
         stage:
           $ref: "#/components/schemas/PipelineStage"
         progress:
@@ -261,6 +271,7 @@ components:
         - id
         - title
         - vibe
+        - engine
         - stage
         - progress
         - audio

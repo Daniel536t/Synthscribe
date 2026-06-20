@@ -8,6 +8,7 @@
 
 export * from './audioUrls';
 export * from './createProjectRequest';
+export * from './engine';
 export * from './errorResponse';
 export * from './healthStatus';
 export * from './pipelineStage';

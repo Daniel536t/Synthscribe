@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AudioUrls } from './audioUrls';
+import type { Engine } from './engine';
 import type { PipelineStage } from './pipelineStage';
 import type { Vibe } from './vibe';
 
@@ -13,6 +14,7 @@ export interface Project {
   id: string;
   title: string;
   vibe: Vibe;
+  engine: Engine;
   stage: PipelineStage;
   /** Coarse progress percentage (0-100). */
   progress: number;
