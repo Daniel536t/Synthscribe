@@ -5,10 +5,29 @@ import os from "os";
 import path from "path";
 import { logger } from "./logger";
 
+/** A transcribed melody note: [startSeconds, durationSeconds, midiPitch]. */
+export type Note = [number, number, number];
+
 export interface Transcription {
   key: string | null;
   tempo: number | null;
   durationSeconds: number | null;
+  notes: Note[];
+}
+
+function parseNotes(raw: unknown): Note[] {
+  if (!Array.isArray(raw)) return [];
+  const notes: Note[] = [];
+  for (const item of raw) {
+    if (
+      Array.isArray(item) &&
+      item.length === 3 &&
+      item.every((n) => typeof n === "number" && Number.isFinite(n))
+    ) {
+      notes.push([item[0], item[1], item[2]] as Note);
+    }
+  }
+  return notes;
 }
 
 function workspaceRoot(): string {
@@ -69,10 +88,11 @@ export async function transcribeHum(wav: Buffer): Promise<Transcription> {
       tempo: typeof parsed.tempo === "number" && parsed.tempo > 0 ? parsed.tempo : null,
       durationSeconds:
         typeof parsed.durationSeconds === "number" ? parsed.durationSeconds : null,
+      notes: parseNotes(parsed.notes),
     };
   } catch (err) {
     logger.warn({ err }, "Transcription unavailable, using defaults");
-    return { key: null, tempo: null, durationSeconds: null };
+    return { key: null, tempo: null, durationSeconds: null, notes: [] };
   } finally {
     await fs.rm(tmp, { force: true });
   }
