@@ -38,3 +38,9 @@ externalPort = 3001
 [nix]
 channel = "stable-25_05"
 packages = ["ffmpeg-full", "libsndfile"]
+
+[userenv]
+
+[userenv.shared]
+MODAL_BACKING_URL = "https://danielbrighten2--synthscribe-musicgen-backing-web.modal.run/generate"
+MODAL_BACKING_TOKEN = "4a1d6a100d0128913943e3a0ea3a6ea6be5f53b671b430a8"

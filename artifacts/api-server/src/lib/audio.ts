@@ -154,6 +154,8 @@ export interface MixInput {
   gain: number;
   /** add a touch of reverb (used for the hum lead) */
   reverb?: boolean;
+  /** fade the stem in over this many seconds to avoid an abrupt onset */
+  fadeInSeconds?: number;
 }
 
 /**
@@ -175,7 +177,11 @@ export async function mixAndMaster(inputs: MixInput[]): Promise<Buffer> {
     const filters: string[] = [];
     const labels: string[] = [];
     inputs.forEach((inp, i) => {
-      let chain = `[${i}:a]aresample=${SAMPLE_RATE},aformat=channel_layouts=stereo,volume=${inp.gain}`;
+      let chain = `[${i}:a]aresample=${SAMPLE_RATE},aformat=channel_layouts=stereo`;
+      if (inp.fadeInSeconds && inp.fadeInSeconds > 0) {
+        chain += `,afade=t=in:st=0:d=${inp.fadeInSeconds}`;
+      }
+      chain += `,volume=${inp.gain}`;
       if (inp.reverb) {
         chain += ",aecho=0.8:0.85:60:0.25";
       }

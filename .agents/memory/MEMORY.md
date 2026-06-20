@@ -1,2 +1,2 @@
-- [DB project-reference rebuild](db-project-references.md) — after editing `lib/db` schema, rebuild its declarations or api-server typecheck fails with stale "no exported member" (esbuild/runtime unaffected).
-- [ElevenLabs on the server](elevenlabs-server.md) — server must call ElevenLabs HTTP directly with the ELEVENLABS_API_KEY secret; the code_execution callback only works in the sandbox.
+- [Git push from main agent](git-push-restriction.md) — main agent CANNOT git push (even non-force); must use background task or Replit Git pane.
+- [Deploy Modal from main agent](modal-deploy-from-main-agent.md) — deploy from /tmp (git guard); repeated foreground `timeout 110 modal deploy` runs (layer caching); use transformers not audiocraft for musicgen.

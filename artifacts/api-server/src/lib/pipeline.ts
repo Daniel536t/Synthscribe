@@ -40,7 +40,15 @@ async function patch(projectId: string, fields: PatchFields): Promise<void> {
   await db.update(projectsTable).set(fields).where(eq(projectsTable.id, projectId));
 }
 
-const DEFAULT_DURATION = 24; // seconds for generated stems
+const DEFAULT_DURATION = 18; // seconds for generated stems
+
+// The wordless ElevenLabs vocal layer is a second paid Music call. It is off by
+// default to roughly halve per-request credit cost; set SYNTHSCRIBE_ENABLE_VOCALS=1
+// (or "true") to re-enable it.
+function vocalsEnabled(): boolean {
+  const v = (process.env.SYNTHSCRIBE_ENABLE_VOCALS ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
 
 export async function runPipeline(projectId: string): Promise<void> {
   const log = logger.child({ projectId });
@@ -70,7 +78,7 @@ export async function runPipeline(projectId: string): Promise<void> {
     const key = transcription.key ?? "C major";
     const tempo = transcription.tempo ?? 90;
     const humDuration = transcription.durationSeconds ?? (await getDurationSeconds(hum));
-    const targetDuration = Math.max(16, Math.min(Math.round(humDuration * 3) || DEFAULT_DURATION, 40));
+    const targetDuration = Math.max(12, Math.min(Math.round(humDuration * 2) || DEFAULT_DURATION, 24));
     await patch(projectId, {
       humPath: humNormPath,
       key,
@@ -122,30 +130,34 @@ export async function runPipeline(projectId: string): Promise<void> {
     );
     await patch(projectId, { backingPath, progress: 65 });
 
-    // 3. Vocals (best effort) --------------------------------------------
-    await patch(projectId, {
-      stage: "singing",
-      progress: 72,
-      message: "Adding a vocal layer",
-    });
+    // 3. Vocals (optional, off by default) -------------------------------
     let vocals: Buffer | null = null;
     let vocalsPath: string | null = null;
-    try {
-      const raw = await generateVocals({
-        vibe: project.vibe,
-        key,
-        tempo,
-        lengthMs: targetDuration * 1000,
+    if (vocalsEnabled()) {
+      await patch(projectId, {
+        stage: "singing",
+        progress: 72,
+        message: "Adding a vocal layer",
       });
-      vocals = await toWav(raw);
-      vocalsPath = await uploadBuffer(
-        `synthscribe/${projectId}/vocals.wav`,
-        vocals,
-        "audio/wav",
-      );
-      await patch(projectId, { vocalsPath, progress: 82 });
-    } catch (err) {
-      log.warn({ err }, "Vocal layer failed, continuing without it");
+      try {
+        const raw = await generateVocals({
+          vibe: project.vibe,
+          key,
+          tempo,
+          lengthMs: targetDuration * 1000,
+        });
+        vocals = await toWav(raw);
+        vocalsPath = await uploadBuffer(
+          `synthscribe/${projectId}/vocals.wav`,
+          vocals,
+          "audio/wav",
+        );
+        await patch(projectId, { vocalsPath, progress: 82 });
+      } catch (err) {
+        log.warn({ err }, "Vocal layer failed, continuing without it");
+        await patch(projectId, { progress: 82 });
+      }
+    } else {
       await patch(projectId, { progress: 82 });
     }
 
@@ -155,8 +167,10 @@ export async function runPipeline(projectId: string): Promise<void> {
       progress: 90,
       message: "Mixing and mastering",
     });
-    const inputs: MixInput[] = [{ buffer: backing, gain: 0.9 }];
-    inputs.push({ buffer: hum, gain: 0.85, reverb: true });
+    const inputs: MixInput[] = [{ buffer: backing, gain: 1.0 }];
+    // Keep only a faint, slowly fading trace of the raw hum so there is no
+    // abrupt humming over the intro; the AI backing stays dominant.
+    inputs.push({ buffer: hum, gain: 0.1, reverb: true, fadeInSeconds: 1.2 });
     if (vocals) inputs.push({ buffer: vocals, gain: 0.6 });
     const master = await mixAndMaster(inputs);
     const finalPath = await uploadBuffer(
