@@ -184,6 +184,12 @@ components:
         - electronic
         - acoustic
         - ambient
+        - serenity
+        - soul
+        - jazz
+        - folk
+        - afrobeat
+        - synthwave
     PipelineStage:
       type: string
       description: Current stage of the hum-to-song pipeline.

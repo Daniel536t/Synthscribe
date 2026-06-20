@@ -20,4 +20,10 @@ export const Vibe = {
   electronic: 'electronic',
   acoustic: 'acoustic',
   ambient: 'ambient',
+  serenity: 'serenity',
+  soul: 'soul',
+  jazz: 'jazz',
+  folk: 'folk',
+  afrobeat: 'afrobeat',
+  synthwave: 'synthwave',
 } as const;

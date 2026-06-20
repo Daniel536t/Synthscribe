@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Sparkles, Wand2, Loader2, Headphones } from "lucide-react";
+import { Music, Sparkles, Wand2, Loader2, Headphones, Flower2, Heart, Piano, Guitar, Drum, Radio } from "lucide-react";
 import AudioRecorder from "@/components/AudioRecorder";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "wouter";
@@ -75,6 +75,12 @@ export default function Home() {
     { value: "electronic", label: "Electronic", icon: <Sparkles className="w-5 h-5" />, color: "bg-cyan-500" },
     { value: "acoustic", label: "Acoustic", icon: <Music className="w-5 h-5" />, color: "bg-emerald-500" },
     { value: "ambient", label: "Ambient", icon: <Wand2 className="w-5 h-5" />, color: "bg-teal-500" },
+    { value: "serenity", label: "Serenity", icon: <Flower2 className="w-5 h-5" />, color: "bg-rose-500" },
+    { value: "soul", label: "Soul", icon: <Heart className="w-5 h-5" />, color: "bg-orange-500" },
+    { value: "jazz", label: "Jazz", icon: <Piano className="w-5 h-5" />, color: "bg-blue-500" },
+    { value: "folk", label: "Folk", icon: <Guitar className="w-5 h-5" />, color: "bg-lime-500" },
+    { value: "afrobeat", label: "Afrobeat", icon: <Drum className="w-5 h-5" />, color: "bg-red-500" },
+    { value: "synthwave", label: "Synthwave", icon: <Radio className="w-5 h-5" />, color: "bg-fuchsia-500" },
   ];
 
   return (

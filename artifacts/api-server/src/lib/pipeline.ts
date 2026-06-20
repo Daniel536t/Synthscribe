@@ -40,13 +40,21 @@ async function patch(projectId: string, fields: PatchFields): Promise<void> {
   await db.update(projectsTable).set(fields).where(eq(projectsTable.id, projectId));
 }
 
-const DEFAULT_DURATION = 18; // seconds for generated stems
+const DEFAULT_DURATION = 24; // seconds for generated stems
 
 // The wordless ElevenLabs vocal layer is a second paid Music call. It is off by
 // default to roughly halve per-request credit cost; set SYNTHSCRIBE_ENABLE_VOCALS=1
 // (or "true") to re-enable it.
 function vocalsEnabled(): boolean {
   const v = (process.env.SYNTHSCRIBE_ENABLE_VOCALS ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+// The AI backing already follows the hummed melody, so the raw hum is NOT
+// layered into the final mix by default — overlaying it produced an unsynced,
+// clashing intro. Set SYNTHSCRIBE_HUM_BLEED=1 to re-enable a faint hum trace.
+function humBleedEnabled(): boolean {
+  const v = (process.env.SYNTHSCRIBE_HUM_BLEED ?? "").trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
 }
 
@@ -78,7 +86,7 @@ export async function runPipeline(projectId: string): Promise<void> {
     const key = transcription.key ?? "C major";
     const tempo = transcription.tempo ?? 90;
     const humDuration = transcription.durationSeconds ?? (await getDurationSeconds(hum));
-    const targetDuration = Math.max(12, Math.min(Math.round(humDuration * 2) || DEFAULT_DURATION, 24));
+    const targetDuration = Math.max(24, Math.min(Math.round(humDuration * 3) || DEFAULT_DURATION, 30));
     await patch(projectId, {
       humPath: humNormPath,
       key,
@@ -168,9 +176,11 @@ export async function runPipeline(projectId: string): Promise<void> {
       message: "Mixing and mastering",
     });
     const inputs: MixInput[] = [{ buffer: backing, gain: 1.0 }];
-    // Keep only a faint, slowly fading trace of the raw hum so there is no
-    // abrupt humming over the intro; the AI backing stays dominant.
-    inputs.push({ buffer: hum, gain: 0.1, reverb: true, fadeInSeconds: 1.2 });
+    // The raw hum is only blended in when explicitly enabled; otherwise the AI
+    // backing (which already follows the melody) carries the song for a clean intro.
+    if (humBleedEnabled()) {
+      inputs.push({ buffer: hum, gain: 0.1, reverb: true, fadeInSeconds: 1.2 });
+    }
     if (vocals) inputs.push({ buffer: vocals, gain: 0.6 });
     const master = await mixAndMaster(inputs);
     const finalPath = await uploadBuffer(

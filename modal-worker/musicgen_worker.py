@@ -80,6 +80,12 @@ VIBE_PROMPTS = {
     "electronic": "polished electronic dance instrumental, analog synths, driving four-on-the-floor beat, club energy",
     "acoustic": "intimate acoustic instrumental, fingerpicked guitar, soft percussion, organic warmth",
     "ambient": "spacious ambient instrumental, evolving pads, gentle textures, weightless and dreamy",
+    "serenity": "serene world-fusion instrumental in the spirit of A.R. Rahman, gentle tabla, sitar and bansuri flute, lush warm strings, ethereal wordless vocal, peaceful and transcendent",
+    "soul": "vintage soul and Motown instrumental, warm horn section, electric piano, gospel-tinged chords, analog warmth, deep groove",
+    "jazz": "smooth late-night jazz instrumental, brushed drums, walking upright bass, expressive piano, soft tenor saxophone",
+    "folk": "intimate acoustic folk instrumental, fingerpicked and strummed guitar, warm strings, organic and heartfelt",
+    "afrobeat": "modern afrobeats instrumental, log drums, layered percussion, warm rolling bass, bright and sunny",
+    "synthwave": "retro 1980s synthwave instrumental, neon analog arpeggios, gated reverb drums, nostalgic cinematic drive",
 }
 
 

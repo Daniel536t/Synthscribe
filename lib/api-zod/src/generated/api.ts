@@ -23,7 +23,7 @@ export const HealthCheckResponse = zod.object({
 export const ListProjectsResponseItem = zod.object({
   "id": zod.string(),
   "title": zod.string(),
-  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient']).describe('The musical mood\/genre direction for the backing track.'),
+  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),
@@ -47,7 +47,7 @@ export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
  */
 export const CreateProjectBody = zod.object({
   "title": zod.string().optional(),
-  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient']).describe('The musical mood\/genre direction for the backing track.')
+  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.')
 })
 
 
@@ -61,7 +61,7 @@ export const GetProjectParams = zod.object({
 export const GetProjectResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
-  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient']).describe('The musical mood\/genre direction for the backing track.'),
+  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),
@@ -94,7 +94,7 @@ export const UploadHumBody = zod.object({
 export const UploadHumResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
-  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient']).describe('The musical mood\/genre direction for the backing track.'),
+  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),

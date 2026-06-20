@@ -29,6 +29,12 @@ const VIBES = new Set([
   "electronic",
   "acoustic",
   "ambient",
+  "serenity",
+  "soul",
+  "jazz",
+  "folk",
+  "afrobeat",
+  "synthwave",
 ]);
 
 const IN_PROGRESS = new Set([

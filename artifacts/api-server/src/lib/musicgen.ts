@@ -29,7 +29,7 @@ export async function generateBackingFromHum(opts: {
     headers: process.env.MODAL_BACKING_TOKEN
       ? { Authorization: `Bearer ${process.env.MODAL_BACKING_TOKEN}` }
       : undefined,
-    signal: AbortSignal.timeout(240_000),
+    signal: AbortSignal.timeout(250_000),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");

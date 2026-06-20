@@ -16,6 +16,12 @@ const VIBE_DESC: Record<string, string> = {
   electronic: "polished electronic dance production, analog synths, driving beat, club energy",
   acoustic: "intimate acoustic arrangement, fingerpicked guitar, soft percussion, organic warmth",
   ambient: "spacious ambient soundscape, evolving pads, gentle textures, weightless and dreamy",
+  serenity: "serene world-fusion in the spirit of A.R. Rahman, gentle tabla, sitar and bansuri flute, lush warm strings, ethereal wordless female vocal, peaceful and transcendent",
+  soul: "vintage soul and Motown, warm horn section, electric piano, gospel-tinged chords, analog tape warmth, deep groove",
+  jazz: "smooth late-night jazz, brushed drums, walking upright bass, expressive piano, soft tenor saxophone",
+  folk: "intimate acoustic folk, fingerpicked and strummed guitar, warm strings, organic and heartfelt",
+  afrobeat: "modern afrobeats groove, log drums, layered percussion, warm rolling bass, bright and sunny",
+  synthwave: "retro 1980s synthwave, neon analog arpeggios, gated reverb drums, nostalgic cinematic drive",
 };
 
 function tempoWord(tempo: number | null): string {
