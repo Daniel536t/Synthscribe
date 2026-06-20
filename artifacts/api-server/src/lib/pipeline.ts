@@ -13,6 +13,7 @@ import { transcribeHum } from "./transcribe";
 import { renderMelodyLead } from "./melody";
 import { generateBacking, generateVocals } from "./elevenlabs";
 import { modalConfigured, generateBackingFromMelody } from "./musicgen";
+import { arrangeBacking } from "./arranger";
 
 type Stage =
   | "draft"
@@ -115,18 +116,24 @@ export async function runPipeline(projectId: string): Promise<void> {
     }
 
     // 3. Backing track ----------------------------------------------------
-    // The user picks the backing engine per generation: "gpu" runs the Modal
-    // MusicGen-melody worker conditioned on the CLEAN lead (with a graceful
-    // ElevenLabs fallback), while "elevenlabs" always uses ElevenLabs Music.
-    // MusicGen-melody needs a melody to condition on, so the GPU path is only
-    // used when we actually rendered a lead; otherwise we use ElevenLabs.
+    // The user picks the backing engine per generation:
+    //   - "arranger" (default): a deterministic, GPU-free studio band (drums +
+    //     bass + chords) rendered on CPU, locked to the detected key/tempo and
+    //     styled by the vibe. Always available, no credits, no GPU.
+    //   - "elevenlabs": the premium ElevenLabs Music model.
+    // The legacy "gpu" (Modal MusicGen-melody) path is kept dormant for old rows
+    // only: it runs solely when explicitly selected AND configured AND we have a
+    // lead to condition on; it is no longer offered in the UI.
     const useGpu = project.engine === "gpu" && modalConfigured() && lead !== null;
+    const useArranger = project.engine !== "elevenlabs" && !useGpu;
     await patch(projectId, {
       stage: "generating_backing",
       progress: 50,
-      message: useGpu
-        ? "Composing music around your melody"
-        : "Producing your backing track",
+      message: useArranger
+        ? "Building your studio band"
+        : useGpu
+          ? "Composing music around your melody"
+          : "Producing your backing track",
     });
     const elevenlabsBacking = async (): Promise<Buffer> => {
       const raw = await generateBacking({
@@ -148,6 +155,18 @@ export async function runPipeline(projectId: string): Promise<void> {
         backing = await toWav(raw);
       } catch (err) {
         log.warn({ err }, "Modal backing failed, falling back to ElevenLabs");
+        backing = await elevenlabsBacking();
+      }
+    } else if (useArranger) {
+      try {
+        backing = await arrangeBacking({
+          vibe: project.vibe,
+          key,
+          tempo,
+          durationSeconds: targetDuration,
+        });
+      } catch (err) {
+        log.warn({ err }, "Arranger failed, falling back to ElevenLabs");
         backing = await elevenlabsBacking();
       }
     } else {

@@ -34,7 +34,7 @@ export default function Home() {
     defaultValues: {
       title: "",
       vibe: "pop",
-      engine: "gpu",
+      engine: "arranger",
     },
   });
 
@@ -86,8 +86,8 @@ export default function Home() {
   ];
 
   const engines: { value: Engine; label: string; icon: React.ReactNode; description: string }[] = [
-    { value: "gpu", label: "GPU (MusicGen)", icon: <Cpu className="w-5 h-5" />, description: "Band composed around your hum" },
-    { value: "elevenlabs", label: "ElevenLabs", icon: <AudioLines className="w-5 h-5" />, description: "Band from ElevenLabs Music" },
+    { value: "arranger", label: "Studio Band", icon: <Cpu className="w-5 h-5" />, description: "Instant drums, bass & chords in your key" },
+    { value: "elevenlabs", label: "ElevenLabs", icon: <AudioLines className="w-5 h-5" />, description: "Premium AI band (richer, uses credits)" },
   ];
 
   return (

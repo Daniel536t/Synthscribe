@@ -7,12 +7,13 @@
  */
 
 /**
- * Which engine produces the backing track. "gpu" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); "elevenlabs" always uses ElevenLabs Music.
+ * Which engine produces the backing track. "arranger" (default) builds a deterministic, GPU-free studio band (drums, bass, chords) on CPU, locked to the detected key and tempo. "elevenlabs" uses the premium ElevenLabs Music model. "gpu" is a legacy Modal MusicGen-melody option kept for backward compatibility and no longer offered in the UI.
  */
 export type Engine = typeof Engine[keyof typeof Engine];
 
 
 export const Engine = {
-  gpu: 'gpu',
+  arranger: 'arranger',
   elevenlabs: 'elevenlabs',
+  gpu: 'gpu',
 } as const;

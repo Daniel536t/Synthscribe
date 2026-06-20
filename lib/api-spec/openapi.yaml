@@ -192,10 +192,11 @@ components:
         - synthwave
     Engine:
       type: string
-      description: Which engine produces the backing track. "gpu" uses the Modal MusicGen-melody worker (falling back to ElevenLabs if it fails or is unconfigured); "elevenlabs" always uses ElevenLabs Music.
+      description: Which engine produces the backing track. "arranger" (default) builds a deterministic, GPU-free studio band (drums, bass, chords) on CPU, locked to the detected key and tempo. "elevenlabs" uses the premium ElevenLabs Music model. "gpu" is a legacy Modal MusicGen-melody option kept for backward compatibility and no longer offered in the UI.
       enum:
-        - gpu
+        - arranger
         - elevenlabs
+        - gpu
     PipelineStage:
       type: string
       description: Current stage of the hum-to-song pipeline.

@@ -28,24 +28,32 @@ def synth_note(freq, dur, sr):
     n = max(1, int(dur * sr))
     t = np.arange(n) / sr
 
-    # Gentle vibrato (~5.5 Hz) for a more human, expressive tone.
-    vib = 1.0 + 0.004 * np.sin(2 * np.pi * 5.5 * t)
+    # Gentle vibrato (~5.5 Hz) that eases in, for a more human, expressive tone.
+    vib_depth = 0.004 * np.minimum(1.0, t / 0.25)
+    vib = 1.0 + vib_depth * np.sin(2 * np.pi * 5.5 * t)
     phase = 2 * np.pi * freq * t * vib
 
-    # Warm additive timbre: fundamental + soft harmonics.
+    # Warm electric-piano-ish timbre: fundamental + a richer, gently rolled-off
+    # harmonic stack, plus a soft octave shimmer for body. This reads as a real
+    # instrument (EP/soft synth) rather than a bare beep.
     wave = (
         1.00 * np.sin(phase)
-        + 0.28 * np.sin(2 * phase)
-        + 0.12 * np.sin(3 * phase)
-        + 0.05 * np.sin(4 * phase)
+        + 0.40 * np.sin(2 * phase)
+        + 0.20 * np.sin(3 * phase)
+        + 0.10 * np.sin(4 * phase)
+        + 0.05 * np.sin(5 * phase)
     )
+    # A bell-like attack transient on the upper partials that decays quickly,
+    # giving the onset a "struck" character before settling into the warm body.
+    attack_t = np.exp(-t * 18.0)
+    wave += 0.18 * attack_t * np.sin(2 * np.pi * freq * 6 * t)
 
-    # ADSR envelope (click-free attack/release).
+    # ADSR envelope (click-free attack, EP-style decay toward a softer sustain).
     env = np.ones(n)
-    a = min(int(0.012 * sr), n // 2)
-    d = min(int(0.06 * sr), n // 2)
-    r = min(int(0.09 * sr), n)
-    sustain = 0.82
+    a = min(int(0.010 * sr), n // 2)
+    d = min(int(0.10 * sr), n // 2)
+    r = min(int(0.12 * sr), n)
+    sustain = 0.70
     if a > 0:
         env[:a] = np.linspace(0.0, 1.0, a)
     if d > 0:
