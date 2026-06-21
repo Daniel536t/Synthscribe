@@ -38,24 +38,29 @@ mixing or a synth resynth lead (see history below).
 
 # Option 2 "Note-for-Note" — opt-in, additive (does NOT replace the above)
 
-There is now a SECOND render mode selectable via `renderMode`
-(`structural` default | `note_for_note`) — column on `projects`, `RenderMode` enum
-in `openapi.yaml`, validated by a `RENDER_MODES` set in `routes/projects.ts`. When
-`note_for_note` AND lyrics AND notes>0, `pipeline.ts` renders a lead vocal that
-sings the user's words on the EXACT hummed pitches/timing, mixed over the
-ElevenLabs backing. ANY failure logs + falls back to Option 1 (`generateSong`).
-- This is NOT the rejected synth resynth lead: the voice is real (ElevenLabs
-  TTS-with-timestamps), only pitch/time-CONFORMED to the hum, not synthesized.
-- Rendering is a **LOCAL librosa worker** `retune.py` (per-segment pyin → pitch_shift
-  to target MIDI → time_stretch to note dur → place at note start), NOT Modal/GPU —
-  pitch/time conform needs no GPU and local avoids Modal deploy fragility +
-  silent-fallback masking. Verify exactness on the ISOLATED worker (synthetic tone →
-  targets, measure back with pyin), NOT the final mix — backing bass dominates
-  full-mix pitch detection and hides the lead.
-- `buildSegments` (`singing.ts`): 1 syllable→1 hummed note in order; if syllables >
-  notes the melody CYCLES (reuses real hummed pitches/durations) — never fabricate a
-  flat last-pitch tail; if syllables < notes, trailing notes go unsung.
-- No public UI toggle yet — only a "Note-for-Note" badge on Project/Library when set.
+A second render mode (`renderMode`: `structural` default | `note_for_note`) makes
+the lead vocal sing the user's words on the EXACT hummed pitches/timing over the
+backing. It is purely additive — Option 1 stays the default and the whole Option 2
+path is guarded + falls back to Option 1 on ANY failure.
+
+Durable decisions/lessons (the *why*, not the diff):
+- **Real voice, conformed — not resynth.** The voice is ElevenLabs
+  TTS-with-timestamps, pitch/time-CONFORMED to the hum. This is distinct from the
+  REJECTED synth resynth lead below; do not conflate them.
+- **Conform runs LOCALLY (librosa), not on Modal/GPU.** Pitch/time conform is
+  CPU-only DSP; running it on Modal would add deploy fragility and risk
+  silent-fallback masking of worker failures. Keep it local.
+- **Verify exactness on the ISOLATED worker, never the final mix.** Backing bass
+  dominates full-mix pitch detection and hides the lead, so a muddy mix contour is
+  NOT evidence of failure. Feed a synthetic tone -> target notes and measure back.
+- **Never fabricate pitches.** When lyrics have more syllables than hummed notes,
+  CYCLE the real hummed melody; never repeat a flat last-pitch tail (a code review
+  caught the flat-tail version as violating "exact hummed pitches").
+- **Persist the ACTUAL produced mode, not the requested one.** On fallback the
+  pipeline must overwrite the project's `renderMode` to `structural`, or the UI
+  badge mislabels a fallback track as note-for-note (also caught in review).
+- No public UI toggle yet — only a "Note-for-Note" badge keyed off the persisted
+  (actual) `renderMode`.
 
 # HISTORY (older approaches, do not revert to these)
 

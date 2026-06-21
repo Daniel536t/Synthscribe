@@ -27,6 +27,7 @@ interface PatchFields {
   stage?: Stage;
   progress?: number;
   message?: string | null;
+  renderMode?: string;
   lyrics?: string | null;
   key?: string | null;
   tempo?: number | null;
@@ -155,6 +156,9 @@ export async function runPipeline(projectId: string): Promise<void> {
     // user supplied lyrics we ask ElevenLabs for a full song that sings those
     // words; otherwise we fall back to a wordless instrumental in the vibe.
     let song: Buffer | null = null;
+    // Track which render path actually produced the final track so the project
+    // record (and its UI badge) never mislabels a fallback as note-for-note.
+    let producedRenderMode = "structural";
 
     // Option 2 — note-for-note. When this project asked for it (and we have both
     // lyrics and a transcribed melody) we render a lead vocal that sings the
@@ -193,6 +197,7 @@ export async function runPipeline(projectId: string): Promise<void> {
           { buffer: backingWav, gain: 0.7 },
           { buffer: leadWav, gain: 1.0, reverb: true, fadeInSeconds: 0.05 },
         ]);
+        producedRenderMode = "note_for_note";
         log.info("Rendered note-for-note (Option 2) song");
       } catch (err) {
         log.warn(
@@ -257,6 +262,7 @@ export async function runPipeline(projectId: string): Promise<void> {
       stage: "complete",
       progress: 100,
       message: "Your song is ready",
+      renderMode: producedRenderMode,
       backingPath: null,
       vocalsPath: null,
       finalPath,
