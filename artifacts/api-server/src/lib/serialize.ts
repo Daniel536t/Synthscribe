@@ -15,6 +15,7 @@ export function toProject(row: ProjectRow) {
     id: row.id,
     title: row.title,
     vibe: row.vibe,
+    theme: row.theme,
     lyrics: row.lyrics,
     length: row.length,
     engine: row.engine,

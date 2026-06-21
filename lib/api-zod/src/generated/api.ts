@@ -24,6 +24,7 @@ export const ListProjectsResponseItem = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "theme": zod.string().nullish().describe('The theme or story used to draft this song\'s lyrics, if any.'),
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
@@ -51,6 +52,7 @@ export const ListProjectsResponse = zod.array(ListProjectsResponseItem)
 export const CreateProjectBody = zod.object({
   "title": zod.string().optional(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "theme": zod.string().optional().describe('A short theme or story for AI-drafted lyrics. Stored for reference; used when drafting lyrics from the hum.'),
   "lyrics": zod.string().optional().describe('Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['elevenlabs']).optional().describe('Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values (\"musicgen\", \"arranger\", \"gpu\") are not accepted for new projects.')
@@ -68,6 +70,7 @@ export const GetProjectResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "theme": zod.string().nullish().describe('The theme or story used to draft this song\'s lyrics, if any.'),
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
@@ -89,6 +92,24 @@ export const GetProjectResponse = zod.object({
 
 
 /**
+ * Analyzes an uploaded hum and uses an AI model to draft original lyrics whose line lengths and stresses are shaped to the melody's phrasing, with a mood matching the detected key/tempo and the chosen vibe. The returned lyrics are editable before producing a song.
+ * @summary Draft lyrics that match a hummed melody
+ */
+export const DraftLyricsBody = zod.object({
+  "file": zod.instanceof(File),
+  "theme": zod.string().describe('A short theme or story the lyrics should be about.'),
+  "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).optional().describe('The musical mood\/genre direction for the backing track.')
+})
+
+export const DraftLyricsResponse = zod.object({
+  "lyrics": zod.string().describe('The drafted lyrics, one line per melodic phrase.'),
+  "key": zod.string().nullish(),
+  "tempo": zod.number().nullish(),
+  "lineCount": zod.number().describe('Number of lyric lines produced.')
+}).describe('AI-drafted lyrics matched to a hummed melody.')
+
+
+/**
  * Accepts a 44.1kHz WAV recording of the user's hum.
  * @summary Upload the hummed recording for a project
  */
@@ -104,6 +125,7 @@ export const UploadHumResponse = zod.object({
   "id": zod.string(),
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
+  "theme": zod.string().nullish().describe('The theme or story used to draft this song\'s lyrics, if any.'),
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),

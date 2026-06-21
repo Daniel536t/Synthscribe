@@ -109,6 +109,11 @@ export default function Project() {
           {project?.vibe} Vibe
         </div>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight">{project?.title}</h1>
+        {project?.theme && (
+          <p className="text-lg text-muted-foreground font-medium max-w-2xl mx-auto" data-testid="text-theme">
+            “{project.theme}”
+          </p>
+        )}
       </div>
 
       {currentStage === "error" ? (

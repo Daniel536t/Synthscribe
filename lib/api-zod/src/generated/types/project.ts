@@ -16,6 +16,11 @@ export interface Project {
   title: string;
   vibe: Vibe;
   /**
+     * The theme or story used to draft this song's lyrics, if any.
+     * @nullable
+     */
+  theme?: string | null;
+  /**
      * The lyrics ElevenLabs sang for this song, if any.
      * @nullable
      */

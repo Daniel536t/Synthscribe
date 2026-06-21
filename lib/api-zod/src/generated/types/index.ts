@@ -8,6 +8,8 @@
 
 export * from './audioUrls';
 export * from './createProjectRequest';
+export * from './draftLyricsBody';
+export * from './draftLyricsResponse';
 export * from './engine';
 export * from './engineChoice';
 export * from './errorResponse';

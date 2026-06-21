@@ -17,6 +17,11 @@ import {
 import { uploadBuffer } from "../lib/storage";
 import { toProject, toProjectStatus } from "../lib/serialize";
 import { runPipeline } from "../lib/pipeline";
+import { normalizeHum } from "../lib/audio";
+import { transcribeHum } from "../lib/transcribe";
+import { draftLyrics } from "../lib/lyrics";
+import { nvidiaConfigured } from "../lib/nvidia";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
@@ -82,6 +87,7 @@ router.post("/projects", async (req, res): Promise<void> => {
     });
     return;
   }
+  const theme = parsed.data.theme?.trim().slice(0, 500) || null;
   const length = parsed.data.length ?? "standard";
   if (!LENGTHS.has(length)) {
     res.status(400).json({ error: "Invalid length" });
@@ -94,6 +100,7 @@ router.post("/projects", async (req, res): Promise<void> => {
       id: randomUUID(),
       title,
       vibe: parsed.data.vibe,
+      theme,
       lyrics,
       length,
       engine,
@@ -165,6 +172,52 @@ router.post(
       .where(eq(projectsTable.id, row.id))
       .returning();
     res.json(UploadHumResponse.parse(toProject(updated)));
+  },
+);
+
+router.post(
+  "/lyrics/draft",
+  upload.single("file"),
+  async (req, res): Promise<void> => {
+    if (!req.file) {
+      res.status(400).json({ error: "Record a hum first" });
+      return;
+    }
+    const theme = (req.body?.theme ?? "").toString().trim().slice(0, 500);
+    if (!theme) {
+      res.status(400).json({ error: "Add a theme or story for your lyrics" });
+      return;
+    }
+    const vibeRaw = (req.body?.vibe ?? "pop").toString();
+    const vibe = VIBES.has(vibeRaw) ? vibeRaw : "pop";
+    if (!nvidiaConfigured()) {
+      res.status(503).json({
+        error: "The lyric writer isn't configured yet. Add an NVIDIA API key to enable it.",
+      });
+      return;
+    }
+    try {
+      const wav = await normalizeHum(req.file.buffer);
+      const transcription = await transcribeHum(wav);
+      const result = await draftLyrics({
+        notes: transcription.notes,
+        key: transcription.key,
+        tempo: transcription.tempo,
+        vibe,
+        theme,
+      });
+      res.json({
+        lyrics: result.lyrics,
+        key: transcription.key,
+        tempo: transcription.tempo,
+        lineCount: result.lineCount,
+      });
+    } catch (err) {
+      logger.error({ err }, "Lyric drafting failed");
+      res.status(503).json({
+        error: "Couldn't draft lyrics from your hum. Please try again.",
+      });
+    }
   },
 );
 

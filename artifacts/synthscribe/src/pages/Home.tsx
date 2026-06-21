@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Vibe } from "@workspace/api-client-react";
-import { useCreateProject, useUploadHum, useStartGeneration, useListProjects } from "@workspace/api-client-react";
+import { useCreateProject, useUploadHum, useStartGeneration, useListProjects, useDraftLyrics } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +21,7 @@ const LENGTH_VALUES = ["short", "standard", "long"] as const;
 const formSchema = z.object({
   title: z.string().optional(),
   vibe: z.nativeEnum(Vibe),
+  theme: z.string().optional(),
   lyrics: z.string().optional(),
   length: z.enum(LENGTH_VALUES),
 });
@@ -32,6 +33,7 @@ export default function Home() {
   const createProject = useCreateProject();
   const uploadHum = useUploadHum();
   const startGeneration = useStartGeneration();
+  const draftLyrics = useDraftLyrics();
   const { data: projects, isLoading: isLoadingProjects } = useListProjects();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -39,6 +41,7 @@ export default function Home() {
     defaultValues: {
       title: "",
       vibe: "pop",
+      theme: "",
       lyrics: "",
       length: "standard",
     },
@@ -46,9 +49,32 @@ export default function Home() {
 
   const selectedVibe = form.watch("vibe");
   const lyricsValue = form.watch("lyrics");
+  const themeValue = form.watch("theme");
   const hasLyrics = !!lyricsValue?.trim();
 
+  const isDrafting = draftLyrics.isPending;
   const isSubmitting = createProject.isPending || uploadHum.isPending || startGeneration.isPending;
+
+  const handleDraftLyrics = async () => {
+    if (!recordedBlob) {
+      alert("Record a melody first so we can match the lyrics to your tune!");
+      return;
+    }
+    const theme = themeValue?.trim();
+    if (!theme) {
+      alert("Tell us what the song should be about first.");
+      return;
+    }
+    try {
+      const result = await draftLyrics.mutateAsync({
+        data: { file: recordedBlob, theme, vibe: form.getValues("vibe") },
+      });
+      form.setValue("lyrics", result.lyrics, { shouldDirty: true, shouldValidate: true });
+    } catch (error) {
+      console.error("Failed to draft lyrics:", error);
+      alert("Couldn't write lyrics from your hum just now. Please try again.");
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!recordedBlob) {
@@ -61,6 +87,7 @@ export default function Home() {
         data: {
           title: values.title || "My Hummed Melody",
           vibe: values.vibe,
+          theme: values.theme?.trim() || undefined,
           lyrics: values.lyrics?.trim() || undefined,
           length: values.length,
         }
@@ -168,13 +195,53 @@ export default function Home() {
 
                 <FormField
                   control={form.control}
+                  name="theme"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base font-semibold">What's it about? (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. chasing a sunset with someone you love"
+                          className="text-lg py-6 rounded-2xl bg-background/50 border-white/20"
+                          data-testid="input-theme"
+                          {...field}
+                        />
+                      </FormControl>
+                      <p className="text-sm text-muted-foreground">
+                        Give a theme and we'll write lyrics shaped to your hum's melody.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="lyrics"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">Write your lyrics (optional)</FormLabel>
+                      <div className="flex items-center justify-between gap-3">
+                        <FormLabel className="text-base font-semibold">Write your lyrics (optional)</FormLabel>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="rounded-xl font-semibold shrink-0"
+                          onClick={handleDraftLyrics}
+                          disabled={isDrafting || isSubmitting || !recordedBlob || !themeValue?.trim()}
+                          data-testid="button-draft-lyrics"
+                        >
+                          {isDrafting ? (
+                            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <Wand2 className="w-4 h-4 mr-1.5" />
+                          )}
+                          {isDrafting ? "Writing..." : "Write from my hum"}
+                        </Button>
+                      </div>
                       <FormControl>
                         <Textarea
-                          placeholder={"Type the words you want sung...\n\nLeave blank for an instrumental track."}
+                          placeholder={"Type the words you want sung...\n\nOr add a theme above and let us write them from your hum.\n\nLeave blank for an instrumental track."}
                           className="min-h-32 text-base py-4 rounded-2xl bg-background/50 border-white/20 resize-y"
                           data-testid="input-lyrics"
                           {...field}

@@ -12,6 +12,8 @@ import type { Vibe } from './vibe';
 export interface CreateProjectRequest {
   title?: string;
   vibe: Vibe;
+  /** A short theme or story for AI-drafted lyrics. Stored for reference; used when drafting lyrics from the hum. */
+  theme?: string;
   /** Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead. */
   lyrics?: string;
   length?: SongLength;

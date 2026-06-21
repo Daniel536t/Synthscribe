@@ -21,6 +21,8 @@ import type {
 
 import type {
   CreateProjectRequest,
+  DraftLyricsBody,
+  DraftLyricsResponse,
   ErrorResponse,
   HealthStatus,
   Project,
@@ -342,6 +344,84 @@ export function useGetProject<TData = Awaited<ReturnType<typeof getProject>>, TE
 
 
 
+
+export const getDraftLyricsUrl = () => {
+
+
+
+
+  return `/api/lyrics/draft`
+}
+
+/**
+ * Analyzes an uploaded hum and uses an AI model to draft original lyrics whose line lengths and stresses are shaped to the melody's phrasing, with a mood matching the detected key/tempo and the chosen vibe. The returned lyrics are editable before producing a song.
+ * @summary Draft lyrics that match a hummed melody
+ */
+export const draftLyrics = async (draftLyricsBody: DraftLyricsBody, options?: RequestInit): Promise<DraftLyricsResponse> => {
+    const formData = new FormData();
+formData.append(`file`, draftLyricsBody.file);
+formData.append(`theme`, draftLyricsBody.theme);
+if(draftLyricsBody.vibe !== undefined) {
+ formData.append(`vibe`, draftLyricsBody.vibe);
+ }
+
+  return customFetch<DraftLyricsResponse>(getDraftLyricsUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body:
+      formData,
+  }
+);}
+
+
+
+
+export const getDraftLyricsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draftLyrics>>, TError,{data: BodyType<DraftLyricsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof draftLyrics>>, TError,{data: BodyType<DraftLyricsBody>}, TContext> => {
+
+const mutationKey = ['draftLyrics'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof draftLyrics>>, {data: BodyType<DraftLyricsBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  draftLyrics(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DraftLyricsMutationResult = NonNullable<Awaited<ReturnType<typeof draftLyrics>>>
+    export type DraftLyricsMutationBody = BodyType<DraftLyricsBody>
+    export type DraftLyricsMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Draft lyrics that match a hummed melody
+ */
+export const useDraftLyrics = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draftLyrics>>, TError,{data: BodyType<DraftLyricsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof draftLyrics>>,
+        TError,
+        {data: BodyType<DraftLyricsBody>},
+        TContext
+      > => {
+      return useMutation(getDraftLyricsMutationOptions(options));
+    }
 
 export const getUploadHumUrl = (projectId: string,) => {
 

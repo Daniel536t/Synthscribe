@@ -85,6 +85,8 @@ export const PipelineStage = {
 export interface CreateProjectRequest {
   title?: string;
   vibe: Vibe;
+  /** A short theme or story for AI-drafted lyrics. Stored for reference; used when drafting lyrics from the hum. */
+  theme?: string;
   /** Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead. */
   lyrics?: string;
   length?: SongLength;
@@ -109,6 +111,11 @@ export interface Project {
   id: string;
   title: string;
   vibe: Vibe;
+  /**
+     * The theme or story used to draft this song's lyrics, if any.
+     * @nullable
+     */
+  theme?: string | null;
   /**
      * The lyrics ElevenLabs sang for this song, if any.
      * @nullable
@@ -146,9 +153,30 @@ export interface ProjectStatus {
   audio: AudioUrls;
 }
 
+/**
+ * AI-drafted lyrics matched to a hummed melody.
+ */
+export interface DraftLyricsResponse {
+  /** The drafted lyrics, one line per melodic phrase. */
+  lyrics: string;
+  /** @nullable */
+  key?: string | null;
+  /** @nullable */
+  tempo?: number | null;
+  /** Number of lyric lines produced. */
+  lineCount: number;
+}
+
 export interface ErrorResponse {
   error: string;
 }
+
+export type DraftLyricsBody = {
+  file: Blob;
+  /** A short theme or story the lyrics should be about. */
+  theme: string;
+  vibe?: Vibe;
+};
 
 export type UploadHumBody = {
   file: Blob;

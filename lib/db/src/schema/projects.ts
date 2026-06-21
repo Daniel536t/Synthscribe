@@ -6,6 +6,7 @@ export const projectsTable = pgTable("projects", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   vibe: text("vibe").notNull(),
+  theme: text("theme"),
   lyrics: text("lyrics"),
   length: text("length").notNull().default("standard"),
   engine: text("engine").notNull().default("elevenlabs"),

@@ -9,6 +9,8 @@ import {
 } from "./audio";
 import { transcribeHum } from "./transcribe";
 import { generateBacking, generateSong } from "./elevenlabs";
+import { draftLyrics } from "./lyrics";
+import { nvidiaConfigured } from "./nvidia";
 
 type Stage =
   | "draft"
@@ -23,6 +25,7 @@ interface PatchFields {
   stage?: Stage;
   progress?: number;
   message?: string | null;
+  lyrics?: string | null;
   key?: string | null;
   tempo?: number | null;
   durationSeconds?: number | null;
@@ -97,7 +100,28 @@ export async function runPipeline(projectId: string): Promise<void> {
     const transcription = await transcribeHum(hum);
     const key = transcription.key ?? "C major";
     const tempo = transcription.tempo ?? 90;
-    const lyrics = project.lyrics?.trim() || "";
+    let lyrics = project.lyrics?.trim() || "";
+    // If the user supplied a theme but no lyrics, draft melody-matched lyrics
+    // now from the transcribed notes. Failures fall back to an instrumental.
+    if (!lyrics && project.theme?.trim() && nvidiaConfigured()) {
+      try {
+        await patch(projectId, {
+          progress: 45,
+          message: "Writing lyrics for your melody",
+        });
+        const drafted = await draftLyrics({
+          notes: transcription.notes,
+          key: transcription.key,
+          tempo: transcription.tempo,
+          vibe: project.vibe,
+          theme: project.theme.trim(),
+        });
+        lyrics = drafted.lyrics.trim();
+        await patch(projectId, { lyrics });
+      } catch (err) {
+        log.warn({ err }, "Auto lyric drafting failed; producing instrumental");
+      }
+    }
     const hasLyrics = lyrics.length > 0;
     // The user picks a target length (Short/Standard/Long); we honour it while
     // making sure a sung track still has room for every word (~2 words/sec) so

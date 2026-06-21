@@ -77,6 +77,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /lyrics/draft:
+    post:
+      operationId: draftLyrics
+      tags: [projects]
+      summary: Draft lyrics that match a hummed melody
+      description: >-
+        Analyzes an uploaded hum and uses an AI model to draft original lyrics
+        whose line lengths and stresses are shaped to the melody's phrasing,
+        with a mood matching the detected key/tempo and the chosen vibe. The
+        returned lyrics are editable before producing a song.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                theme:
+                  type: string
+                  description: A short theme or story the lyrics should be about.
+                vibe:
+                  $ref: "#/components/schemas/Vibe"
+              required:
+                - file
+                - theme
+      responses:
+        "200":
+          description: Drafted lyrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftLyricsResponse"
+        "400":
+          description: Missing hum or theme
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Lyric model unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /projects/{projectId}/hum:
     post:
       operationId: uploadHum
@@ -228,6 +275,9 @@ components:
           type: string
         vibe:
           $ref: "#/components/schemas/Vibe"
+        theme:
+          type: string
+          description: A short theme or story for AI-drafted lyrics. Stored for reference; used when drafting lyrics from the hum.
         lyrics:
           type: string
           description: Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead.
@@ -263,6 +313,9 @@ components:
           type: string
         vibe:
           $ref: "#/components/schemas/Vibe"
+        theme:
+          type: [string, "null"]
+          description: The theme or story used to draft this song's lyrics, if any.
         lyrics:
           type: [string, "null"]
           description: The lyrics ElevenLabs sang for this song, if any.
@@ -322,6 +375,23 @@ components:
         - stage
         - progress
         - audio
+    DraftLyricsResponse:
+      type: object
+      description: AI-drafted lyrics matched to a hummed melody.
+      properties:
+        lyrics:
+          type: string
+          description: The drafted lyrics, one line per melodic phrase.
+        key:
+          type: [string, "null"]
+        tempo:
+          type: [number, "null"]
+        lineCount:
+          type: integer
+          description: Number of lyric lines produced.
+      required:
+        - lyrics
+        - lineCount
     ErrorResponse:
       type: object
       properties:
