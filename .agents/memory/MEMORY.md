@@ -1,5 +1,5 @@
 - [Git push from main agent](git-push-restriction.md) — main agent CANNOT git push (even non-force); must use background task or Replit Git pane.
 - [Deploy Modal from main agent](modal-deploy-from-main-agent.md) — deploy from /tmp (git guard); repeated foreground `timeout 110 modal deploy` runs (layer caching); use transformers not audiocraft for musicgen.
 - [SynthScribe vibe coupling](synthscribe-vibe-coupling.md) — adding a vibe needs 5 edits; backend `VIBES` Set is hand-maintained, not from OpenAPI enum → 400 "Invalid vibe" if missed.
-- [SynthScribe melody faithfulness](synthscribe-melody-faithfulness.md) — user wants RAW hum mixed over the bed ("calls out" then fades), NOT a clean resynth lead (rejected as "trash").
+- [SynthScribe melody faithfulness](synthscribe-melody-faithfulness.md) — NOW: hum=seed only (key/tempo), user writes own lyrics ("Option B", AI drafting blocked by phone verify), ElevenLabs sings them; no hum-in-final, no resynth lead.
 - [SynthScribe engine coupling](synthscribe-engine-coupling.md) — ElevenLabs-only now (Modal/MusicGen removed); engine field kept for back-compat, response Engine enum stays wide for old rows.

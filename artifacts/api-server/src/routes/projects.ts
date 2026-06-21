@@ -42,6 +42,9 @@ const VIBES = new Set([
 // accepted for new projects.
 const ENGINES = new Set(["elevenlabs"]);
 
+// Cap lyrics length to avoid oversized prompts (the sung track is ~60s max).
+const MAX_LYRICS_CHARS = 2000;
+
 const IN_PROGRESS = new Set([
   "transcribing",
   "generating_backing",
@@ -69,6 +72,13 @@ router.post("/projects", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Invalid engine" });
     return;
   }
+  const lyrics = parsed.data.lyrics?.trim() || null;
+  if (lyrics && lyrics.length > MAX_LYRICS_CHARS) {
+    res.status(400).json({
+      error: `Lyrics are too long (max ${MAX_LYRICS_CHARS} characters).`,
+    });
+    return;
+  }
   const title = parsed.data.title?.trim() || "Untitled song";
   const [row] = await db
     .insert(projectsTable)
@@ -76,6 +86,7 @@ router.post("/projects", async (req, res): Promise<void> => {
       id: randomUUID(),
       title,
       vibe: parsed.data.vibe,
+      lyrics,
       engine,
       stage: "draft",
       progress: 0,

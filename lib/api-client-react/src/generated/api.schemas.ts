@@ -73,6 +73,8 @@ export const PipelineStage = {
 export interface CreateProjectRequest {
   title?: string;
   vibe: Vibe;
+  /** Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead. */
+  lyrics?: string;
   engine?: EngineChoice;
 }
 
@@ -94,6 +96,11 @@ export interface Project {
   id: string;
   title: string;
   vibe: Vibe;
+  /**
+     * The lyrics ElevenLabs sang for this song, if any.
+     * @nullable
+     */
+  lyrics?: string | null;
   engine: Engine;
   stage: PipelineStage;
   /** Coarse progress percentage (0-100). */

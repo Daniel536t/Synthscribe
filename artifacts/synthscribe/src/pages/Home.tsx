@@ -7,6 +7,7 @@ import { Vibe } from "@workspace/api-client-react";
 import { useCreateProject, useUploadHum, useStartGeneration, useListProjects } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Music, Sparkles, Wand2, Loader2, Headphones, Flower2, Heart, Piano, Guitar, Drum, Radio } from "lucide-react";
@@ -17,6 +18,7 @@ import { Link } from "wouter";
 const formSchema = z.object({
   title: z.string().optional(),
   vibe: z.nativeEnum(Vibe),
+  lyrics: z.string().optional(),
 });
 
 export default function Home() {
@@ -33,6 +35,7 @@ export default function Home() {
     defaultValues: {
       title: "",
       vibe: "pop",
+      lyrics: "",
     },
   });
 
@@ -47,7 +50,11 @@ export default function Home() {
     try {
       // 1. Create project
       const project = await createProject.mutateAsync({
-        data: { title: values.title || "My Hummed Melody", vibe: values.vibe }
+        data: {
+          title: values.title || "My Hummed Melody",
+          vibe: values.vibe,
+          lyrics: values.lyrics?.trim() || undefined,
+        }
       });
 
       // 2. Upload hum
@@ -142,6 +149,26 @@ export default function Home() {
                       <FormControl>
                         <Input placeholder="e.g. Summer Breeze Hook" className="text-lg py-6 rounded-2xl bg-background/50 border-white/20" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="lyrics"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base font-semibold">Write your lyrics (optional)</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={"Type the words you want sung...\n\nLeave blank for an instrumental track."}
+                          className="min-h-32 text-base py-4 rounded-2xl bg-background/50 border-white/20 resize-y"
+                          data-testid="input-lyrics"
+                          {...field}
+                        />
+                      </FormControl>
+                      <p className="text-sm text-muted-foreground">ElevenLabs will sing these words in the key &amp; tempo of your hum.</p>
                       <FormMessage />
                     </FormItem>
                   )}

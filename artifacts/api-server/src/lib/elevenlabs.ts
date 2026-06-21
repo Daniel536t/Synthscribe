@@ -68,6 +68,26 @@ export async function generateBacking(opts: {
   return postMusic(prompt, opts.lengthMs);
 }
 
+/** Generate a full sung song: lead vocals singing the user's lyrics over a vibe-matched backing. */
+export async function generateSong(opts: {
+  vibe: string;
+  key: string | null;
+  tempo: number | null;
+  lyrics: string;
+  lengthMs: number;
+}): Promise<Buffer> {
+  const desc = VIBE_DESC[opts.vibe] ?? VIBE_DESC.pop;
+  const keyPart = opts.key ? `in the key of ${opts.key}, ` : "";
+  const prompt =
+    `A complete song with clear, expressive lead vocals singing words. ` +
+    `Musical style: ${desc}. ${keyPart}${tempoWord(opts.tempo)}. ` +
+    `The lead vocalist sings these exact lyrics, front and center in the mix, with clear diction and emotion:\n\n` +
+    `${opts.lyrics}\n\n` +
+    `Studio-quality production, the vocal carrying the melody over the instrumental.`;
+  logger.info({ vibe: opts.vibe }, "Requesting ElevenLabs sung song");
+  return postMusic(prompt, opts.lengthMs);
+}
+
 /** Generate a wordless vocal melody (vocalise) layer to sit on top of the song. */
 export async function generateVocals(opts: {
   vibe: string;

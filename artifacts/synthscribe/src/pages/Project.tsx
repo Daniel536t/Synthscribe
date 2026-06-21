@@ -1,6 +1,6 @@
 import { useGetProjectStatus, useGetProject, ProjectStatus } from "@workspace/api-client-react";
 import { useRoute } from "wouter";
-import { Loader2, Music, CheckCircle2, AlertCircle, Sparkles, Download, Play, Mic, Waves } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Sparkles, Download, Play, Mic, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState, useRef } from "react";
@@ -49,9 +49,9 @@ export default function Project() {
   const stages = [
     { key: "draft", label: "Draft" },
     { key: "transcribing", label: "Transcribing Melody" },
-    { key: "generating_backing", label: "Generating Backing Track" },
-    { key: "singing", label: "Synthesizing Vocals" },
-    { key: "mixing", label: "Final Mix & Master" },
+    { key: "generating_backing", label: "Producing Your Track" },
+    { key: "singing", label: "Singing Your Lyrics" },
+    { key: "mixing", label: "Finishing the Master" },
     { key: "complete", label: "Complete" }
   ];
 
@@ -145,37 +145,50 @@ export default function Project() {
             </div>
           </div>
 
-          {/* Stems */}
+          {/* Lyrics */}
+          {project?.lyrics && (
+            <div>
+              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Waves className="w-6 h-6 text-primary" />
+                The Lyrics
+              </h3>
+              <Card className="bg-card/50 backdrop-blur border-none">
+                <CardContent className="p-8">
+                  <p className="whitespace-pre-wrap text-lg leading-relaxed font-medium text-foreground/90" data-testid="text-lyrics">
+                    {project.lyrics}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Original hum seed */}
           <div>
             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-primary" />
-              The Stems
+              Your Original Hum
             </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                { title: "Original Hum", icon: <Mic />, url: audioUrls?.hum, color: "text-blue-500" },
-                { title: "Backing Track", icon: <Music />, url: audioUrls?.backing, color: "text-purple-500" },
-                { title: "Vocals", icon: <Waves />, url: audioUrls?.vocals, color: "text-pink-500" },
-              ].map((stem, i) => (
-                <Card key={i} className="bg-card/50 backdrop-blur border-none hover:bg-card transition-colors">
-                  <CardContent className="p-6 flex flex-col items-center text-center gap-4">
-                    <div className={`w-12 h-12 rounded-full bg-background flex items-center justify-center ${stem.color}`}>
-                      {stem.icon}
-                    </div>
-                    <h4 className="font-bold">{stem.title}</h4>
-                    <Button 
-                      variant="outline" 
-                      className="w-full rounded-xl"
-                      disabled={!stem.url}
-                      onClick={() => playAudio(stem.url || null)}
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Listen
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <p className="text-muted-foreground mb-6 font-medium">
+              The hum you recorded set the key and tempo of this song. Here it is, kept as a keepsake.
+            </p>
+            <Card className="bg-card/50 backdrop-blur border-none hover:bg-card transition-colors max-w-sm">
+              <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center text-blue-500">
+                  <Mic />
+                </div>
+                <h4 className="font-bold">Original Hum</h4>
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl"
+                  disabled={!audioUrls?.hum}
+                  onClick={() => playAudio(audioUrls?.hum || null)}
+                  data-testid="button-play-hum"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Listen
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
         </div>

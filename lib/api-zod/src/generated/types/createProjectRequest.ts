@@ -11,5 +11,7 @@ import type { Vibe } from './vibe';
 export interface CreateProjectRequest {
   title?: string;
   vibe: Vibe;
+  /** Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead. */
+  lyrics?: string;
   engine?: EngineChoice;
 }

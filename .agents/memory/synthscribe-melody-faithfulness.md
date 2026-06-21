@@ -1,41 +1,51 @@
 ---
-name: SynthScribe melody faithfulness vs. the loved "hum calls out" sound
-description: The product decision on how the user's tune appears in the final song — raw hum mixed over the bed, NOT a resynth lead.
+name: SynthScribe — how the hum is used and how songs get their words
+description: Product decisions on the hum's role (seed only now) and where lyrics come from (user-written, "Option B").
 ---
 
-# How the hummed melody appears in the final song
+# CURRENT direction (supersedes the older "raw hum mixed over the bed")
 
-There were two competing approaches. The user explicitly chose the first and
-called the second "trash":
+The product pivoted to **real singing**. As of the "Sung songs with AI lyrics" work:
 
-1. **(SHIPPED, loved) Raw hum mixed over the AI bed.** The user's normalized hum
-   (with a touch of reverb, gain ~0.85) is layered on top of the AI backing
-   (gain ~0.9) in `pipeline.ts` step 4. Because the hum is short and the song is
-   ~3x longer, the hum **"calls out" at the start and then melts into the band**.
-   This is the original, loved SynthScribe sound. The ElevenLabs bed ignores the
-   hum (text-prompt only, from the detected vibe/key/tempo), but the raw hum on
-   top still carries the user's idea. (Note: the app is now ElevenLabs-only — the
-   MusicGen hum-conditioning path was removed; see synthscribe-engine-coupling.md.)
+1. **Hum = SEED ONLY.** The recorded hum is transcribed for key/tempo/mood and
+   those feed the ElevenLabs prompt. The hum is **NOT layered into the final
+   track** anymore. The normalized hum is still kept and shown as an "Original
+   Hum" stem/keepsake, but `mixAndMaster`/hum-layering was removed from
+   `pipeline.ts`. backing/vocals stem paths are now null; the single ElevenLabs
+   call is the full final track.
+2. **Lyrics = user-written ("Option B").** The user types lyrics in a textarea on
+   Home; ElevenLabs sings those exact words via `generateSong()` in
+   `elevenlabs.ts`. If lyrics are blank, it falls back to an instrumental
+   (`generateBacking`).
+   **Why Option B and not AI-drafted lyrics:** AI drafting (OpenAI via Replit AI
+   Integrations) was blocked by Replit **phone verification** the user couldn't
+   complete; user chose to write lyrics themselves rather than verify or supply an
+   OpenAI key. If revisiting AI lyric drafting, the blocker is account-level phone
+   verification, not code.
+3. Song length is sized to the lyrics (~2 words/sec, clamped to ElevenLabs'
+   10–60s window), not to hum length, when lyrics are present.
 
-2. **(REJECTED) Clean resynth lead.** Transcribe the hum (pyin) → render a clean
-   additive-synth lead WAV → use that lead both to condition MusicGen and as the
-   dominant melodic line, with the raw hum never used as audio. This is
-   *note-faithful* but the user hated how the synth lead sounded ("trash"). Do
-   NOT bring back `melody.ts` / `render_melody.py` / the clean-lead mix.
+**How to apply:** keep `transcribe.py`/`transcribe.ts` for key/tempo only. Do not
+re-add hum-into-final mixing or a resynth lead (see history below). `lyrics` is a
+nullable column on `projects` and a field on CreateProjectRequest/Project in
+`openapi.yaml`.
 
-**Why mood-faithful beats note-faithful here:** AI conditioning is loose anyway
-(MusicGen-melody drifts with `do_sample=True`; ElevenLabs is prompt-only), so a
-"faithful" pipeline still won't reproduce exact notes. The user prefers hearing
-their *actual recorded hum* over a clean-but-fake synth line. Garbage-in fears
-about the breathy raw hum were overruled by the user's ear.
+# HISTORY (older approaches, do not revert to these)
 
-**How to apply:** keep `transcribe.py`/`transcribe.ts` — it's still used for
-key/tempo detection and the ElevenLabs prompt, NOT for rendering a lead. Mix the
-raw normalized hum into the final master; never resynthesize a lead.
+Before the singing pivot there were two competing approaches for making the hum
+audible. The user chose #1 ("raw hum calls out then melts into the bed") and
+called #2 "trash". Both are now moot because the hum is a seed only — but the
+rejection of #2 still stands:
 
-## pyin extraction lessons (still relevant for key/tempo)
+1. (old, shipped) Raw normalized hum (reverb, gain ~0.85) layered over the AI bed.
+2. (REJECTED, "trash") Clean resynth lead: transcribe → additive-synth lead WAV →
+   use as dominant melody. Do NOT bring back `melody.ts` / `render_melody.py` /
+   the clean-lead mix.
+
+# pyin extraction lessons (still relevant for key/tempo)
 `transcribe.py` uses hardened librosa pyin (FMIN 70 / FMAX 1000, voiced_prob +
 RMS gate, octave-fold to ±6 of the median, median filter, key-snap). Chosen over
 Spotify Basic Pitch because Basic Pitch pulls TensorFlow/onnxruntime that
-conflicts with api-server's numpy 2.x. Verify on REAL hums (`.local/fixtures/real_hum.wav`),
-not synthetic sines, which hide octave/breath problems.
+conflicts with api-server's numpy 2.x. Verify on REAL hums
+(`.local/fixtures/real_hum.wav`), not synthetic sines, which hide octave/breath
+problems.

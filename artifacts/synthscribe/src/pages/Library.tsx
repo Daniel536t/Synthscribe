@@ -52,9 +52,14 @@ export default function Library() {
                   )}
                 </div>
                 <CardContent className="p-6 flex-1 flex flex-col">
-                  <h3 className="font-bold text-2xl mb-4 line-clamp-2 leading-tight flex-1">{project.title}</h3>
+                  <h3 className="font-bold text-2xl mb-2 line-clamp-2 leading-tight">{project.title}</h3>
+                  {project.lyrics && (
+                    <p className="text-sm text-muted-foreground italic line-clamp-2 mb-4 flex-1">
+                      &ldquo;{project.lyrics}&rdquo;
+                    </p>
+                  )}
                   
-                  <div className="space-y-3 pt-4 border-t border-border/50">
+                  <div className="space-y-3 pt-4 border-t border-border/50 mt-auto">
                     <div className="flex items-center text-sm text-muted-foreground font-medium">
                       <Calendar className="w-4 h-4 mr-3 opacity-70" />
                       {formatDistanceToNow(new Date(project.createdAt), { addSuffix: true })}

@@ -221,6 +221,9 @@ components:
           type: string
         vibe:
           $ref: "#/components/schemas/Vibe"
+        lyrics:
+          type: string
+          description: Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead.
         engine:
           $ref: "#/components/schemas/EngineChoice"
       required:
@@ -251,6 +254,9 @@ components:
           type: string
         vibe:
           $ref: "#/components/schemas/Vibe"
+        lyrics:
+          type: [string, "null"]
+          description: The lyrics ElevenLabs sang for this song, if any.
         engine:
           $ref: "#/components/schemas/Engine"
         stage:

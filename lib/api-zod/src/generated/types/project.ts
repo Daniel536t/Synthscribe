@@ -14,6 +14,11 @@ export interface Project {
   id: string;
   title: string;
   vibe: Vibe;
+  /**
+     * The lyrics ElevenLabs sang for this song, if any.
+     * @nullable
+     */
+  lyrics?: string | null;
   engine: Engine;
   stage: PipelineStage;
   /** Coarse progress percentage (0-100). */
