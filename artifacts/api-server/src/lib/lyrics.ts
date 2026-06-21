@@ -315,5 +315,21 @@ export async function draftLyrics(opts: {
     );
   }
 
+  // Final structural gate: every line must fit its phrase's syllable target
+  // (within tolerance) after repair. If repair couldn't bring a line into
+  // range, fail closed so callers fall back rather than singing words that
+  // don't fit the tune.
+  const misfits = scaffold.lines.reduce((count, target, idx) => {
+    const got = countLineSyllables(lines[idx]);
+    return Math.abs(got - target.syllables) > SYLLABLE_TOLERANCE
+      ? count + 1
+      : count;
+  }, 0);
+  if (misfits > 0) {
+    throw new Error(
+      `Drafted lyrics did not fit the melody (${misfits}/${scaffold.lines.length} lines off syllable target)`,
+    );
+  }
+
   return { lyrics: lines.join("\n"), lineCount: lines.length };
 }
