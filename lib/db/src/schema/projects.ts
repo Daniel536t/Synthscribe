@@ -10,6 +10,10 @@ export const projectsTable = pgTable("projects", {
   lyrics: text("lyrics"),
   length: text("length").notNull().default("standard"),
   engine: text("engine").notNull().default("elevenlabs"),
+  // Which render path produces the lead vocal:
+  //  - "structural"    = Option 1 (ElevenLabs invents a melody in the hum's key/tempo/vibe)
+  //  - "note_for_note" = Option 2 (lead vocal sings on the EXACT hummed pitches/timing)
+  renderMode: text("render_mode").notNull().default("structural"),
   stage: text("stage").notNull().default("draft"),
   progress: integer("progress").notNull().default(0),
   message: text("message"),

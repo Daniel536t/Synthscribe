@@ -28,6 +28,7 @@ export const ListProjectsResponseItem = zod.object({
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
+  "renderMode": zod.enum(['structural', 'note_for_note']).optional().describe('Which render path produces the lead vocal. \"structural\" (the default, \"Option 1\") lets ElevenLabs invent a melody in the hum\'s key\/tempo\/vibe while singing the lyrics. \"note_for_note\" (\"Option 2\") makes the lead vocal sing the lyrics on the EXACT hummed pitches and timing. Option 2 is currently selectable only for internal evaluation and falls back to Option 1 if its renderer is unavailable.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),
@@ -55,7 +56,8 @@ export const CreateProjectBody = zod.object({
   "theme": zod.string().optional().describe('A short theme or story for AI-drafted lyrics. Stored for reference; used when drafting lyrics from the hum.'),
   "lyrics": zod.string().optional().describe('Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
-  "engine": zod.enum(['elevenlabs']).optional().describe('Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values (\"musicgen\", \"arranger\", \"gpu\") are not accepted for new projects.')
+  "engine": zod.enum(['elevenlabs']).optional().describe('Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values (\"musicgen\", \"arranger\", \"gpu\") are not accepted for new projects.'),
+  "renderMode": zod.enum(['structural', 'note_for_note']).optional().describe('Which render path produces the lead vocal. \"structural\" (the default, \"Option 1\") lets ElevenLabs invent a melody in the hum\'s key\/tempo\/vibe while singing the lyrics. \"note_for_note\" (\"Option 2\") makes the lead vocal sing the lyrics on the EXACT hummed pitches and timing. Option 2 is currently selectable only for internal evaluation and falls back to Option 1 if its renderer is unavailable.')
 })
 
 
@@ -74,6 +76,7 @@ export const GetProjectResponse = zod.object({
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
+  "renderMode": zod.enum(['structural', 'note_for_note']).optional().describe('Which render path produces the lead vocal. \"structural\" (the default, \"Option 1\") lets ElevenLabs invent a melody in the hum\'s key\/tempo\/vibe while singing the lyrics. \"note_for_note\" (\"Option 2\") makes the lead vocal sing the lyrics on the EXACT hummed pitches and timing. Option 2 is currently selectable only for internal evaluation and falls back to Option 1 if its renderer is unavailable.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),
@@ -129,6 +132,7 @@ export const UploadHumResponse = zod.object({
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
   "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
+  "renderMode": zod.enum(['structural', 'note_for_note']).optional().describe('Which render path produces the lead vocal. \"structural\" (the default, \"Option 1\") lets ElevenLabs invent a melody in the hum\'s key\/tempo\/vibe while singing the lyrics. \"note_for_note\" (\"Option 2\") makes the lead vocal sing the lyrics on the EXACT hummed pitches and timing. Option 2 is currently selectable only for internal evaluation and falls back to Option 1 if its renderer is unavailable.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
   "key": zod.string().nullish(),

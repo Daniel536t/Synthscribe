@@ -90,6 +90,82 @@ export async function generateSong(opts: {
   return postMusic(prompt, opts.lengthMs);
 }
 
+// A neutral, clear default voice ("Rachel") used for Option 2's note-for-note
+// lead vocal. The voice is pitch/time-conformed downstream to the hummed melody,
+// so we only need clean, well-aligned diction here — swappable via env.
+const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+
+export interface SpeechAlignment {
+  /** Decoded clean WAV of the spoken lyrics. */
+  wav: Buffer;
+  /** One entry per character of the spoken text. */
+  chars: string[];
+  /** Per-character start time in seconds. */
+  starts: number[];
+  /** Per-character end time in seconds. */
+  ends: number[];
+}
+
+/**
+ * Speak the given text with ElevenLabs TTS and return the audio together with
+ * per-character timing. Option 2 uses the timing to slice the spoken vocal at
+ * word/syllable boundaries before conforming each slice to a hummed note.
+ * Throws on transport/API errors so the caller can fall back to Option 1.
+ */
+export async function synthesizeSpeechWithTimestamps(
+  text: string,
+): Promise<SpeechAlignment> {
+  const voiceId = process.env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
+  const res = await fetch(
+    `${BASE}/v1/text-to-speech/${voiceId}/with-timestamps?output_format=mp3_44100_128`,
+    {
+      method: "POST",
+      headers: {
+        "xi-api-key": apiKey(),
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        model_id: "eleven_multilingual_v2",
+      }),
+      signal: AbortSignal.timeout(120_000),
+    },
+  );
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`ElevenLabs TTS ${res.status}: ${t.slice(0, 300)}`);
+  }
+  const data = (await res.json()) as {
+    audio_base64?: string;
+    alignment?: {
+      characters?: string[];
+      character_start_times_seconds?: number[];
+      character_end_times_seconds?: number[];
+    };
+    normalized_alignment?: {
+      characters?: string[];
+      character_start_times_seconds?: number[];
+      character_end_times_seconds?: number[];
+    };
+  };
+  if (!data.audio_base64) throw new Error("ElevenLabs TTS returned no audio");
+  const align = data.alignment ?? data.normalized_alignment;
+  const chars = align?.characters ?? [];
+  const starts = align?.character_start_times_seconds ?? [];
+  const ends = align?.character_end_times_seconds ?? [];
+  if (chars.length === 0 || chars.length !== starts.length) {
+    throw new Error("ElevenLabs TTS returned no usable character alignment");
+  }
+  logger.info({ chars: chars.length }, "ElevenLabs TTS with timestamps");
+  return {
+    wav: Buffer.from(data.audio_base64, "base64"),
+    chars,
+    starts,
+    ends,
+  };
+}
+
 /** Generate a wordless vocal melody (vocalise) layer to sit on top of the song. */
 export async function generateVocals(opts: {
   vibe: string;

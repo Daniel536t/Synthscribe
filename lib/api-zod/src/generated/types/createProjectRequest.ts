@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { EngineChoice } from './engineChoice';
+import type { RenderMode } from './renderMode';
 import type { SongLength } from './songLength';
 import type { Vibe } from './vibe';
 
@@ -18,4 +19,5 @@ export interface CreateProjectRequest {
   lyrics?: string;
   length?: SongLength;
   engine?: EngineChoice;
+  renderMode?: RenderMode;
 }

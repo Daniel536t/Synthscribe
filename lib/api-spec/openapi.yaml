@@ -257,6 +257,18 @@ components:
       description: Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values ("musicgen", "arranger", "gpu") are not accepted for new projects.
       enum:
         - elevenlabs
+    RenderMode:
+      type: string
+      description: >-
+        Which render path produces the lead vocal. "structural" (the default,
+        "Option 1") lets ElevenLabs invent a melody in the hum's key/tempo/vibe
+        while singing the lyrics. "note_for_note" ("Option 2") makes the lead
+        vocal sing the lyrics on the EXACT hummed pitches and timing. Option 2 is
+        currently selectable only for internal evaluation and falls back to
+        Option 1 if its renderer is unavailable.
+      enum:
+        - structural
+        - note_for_note
     PipelineStage:
       type: string
       description: Current stage of the hum-to-song pipeline.
@@ -285,6 +297,8 @@ components:
           $ref: "#/components/schemas/SongLength"
         engine:
           $ref: "#/components/schemas/EngineChoice"
+        renderMode:
+          $ref: "#/components/schemas/RenderMode"
       required:
         - vibe
     AudioUrls:
@@ -323,6 +337,8 @@ components:
           $ref: "#/components/schemas/SongLength"
         engine:
           $ref: "#/components/schemas/Engine"
+        renderMode:
+          $ref: "#/components/schemas/RenderMode"
         stage:
           $ref: "#/components/schemas/PipelineStage"
         progress:

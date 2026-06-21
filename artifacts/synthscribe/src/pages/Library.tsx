@@ -36,8 +36,15 @@ export default function Library() {
               <Card className="hover-elevate cursor-pointer transition-all border-none bg-card/60 backdrop-blur-md hover:bg-card overflow-hidden group h-full flex flex-col">
                 <div className="h-40 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 relative flex items-center justify-center">
                   <Music className="w-16 h-16 text-primary/30 group-hover:scale-110 transition-transform group-hover:text-primary/50" />
-                  <div className="absolute top-4 right-4 bg-background/80 backdrop-blur text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider text-primary">
-                    {project.vibe}
+                  <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                    <div className="bg-background/80 backdrop-blur text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider text-primary">
+                      {project.vibe}
+                    </div>
+                    {project.renderMode === "note_for_note" && (
+                      <div className="bg-primary/90 backdrop-blur text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider" data-testid={`badge-note-for-note-${project.id}`}>
+                        Note-for-Note
+                      </div>
+                    )}
                   </div>
                   {project.stage !== "complete" && project.stage !== "error" && (
                     <div className="absolute top-4 left-4 bg-secondary/80 backdrop-blur text-secondary-foreground text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2">

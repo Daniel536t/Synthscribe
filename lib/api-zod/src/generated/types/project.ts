@@ -8,6 +8,7 @@
 import type { AudioUrls } from './audioUrls';
 import type { Engine } from './engine';
 import type { PipelineStage } from './pipelineStage';
+import type { RenderMode } from './renderMode';
 import type { SongLength } from './songLength';
 import type { Vibe } from './vibe';
 
@@ -27,6 +28,7 @@ export interface Project {
   lyrics?: string | null;
   length?: SongLength;
   engine: Engine;
+  renderMode?: RenderMode;
   stage: PipelineStage;
   /** Coarse progress percentage (0-100). */
   progress: number;

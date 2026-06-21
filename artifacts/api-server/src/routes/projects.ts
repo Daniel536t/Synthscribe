@@ -47,6 +47,11 @@ const VIBES = new Set([
 // accepted for new projects.
 const ENGINES = new Set(["elevenlabs"]);
 
+// Which render path produces the lead vocal. "structural" is Option 1 (default);
+// "note_for_note" is Option 2 (sing on the exact hummed pitches). Option 2 has no
+// public toggle yet — it is accepted here only for internal evaluation.
+const RENDER_MODES = new Set(["structural", "note_for_note"]);
+
 // Cap lyrics length to avoid oversized prompts.
 const MAX_LYRICS_CHARS = 4000;
 
@@ -93,6 +98,11 @@ router.post("/projects", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Invalid length" });
     return;
   }
+  const renderMode = parsed.data.renderMode ?? "structural";
+  if (!RENDER_MODES.has(renderMode)) {
+    res.status(400).json({ error: "Invalid renderMode" });
+    return;
+  }
   const title = parsed.data.title?.trim() || "Untitled song";
   const [row] = await db
     .insert(projectsTable)
@@ -104,6 +114,7 @@ router.post("/projects", async (req, res): Promise<void> => {
       lyrics,
       length,
       engine,
+      renderMode,
       stage: "draft",
       progress: 0,
     })

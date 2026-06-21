@@ -151,7 +151,7 @@ export function buildScaffold(
 }
 
 /** Estimate the syllables in a single English word using vowel-group heuristics. */
-function countWordSyllables(word: string): number {
+export function countWordSyllables(word: string): number {
   let w = word.toLowerCase().replace(/[^a-z]/g, "");
   if (!w) return 0;
   if (w.length <= 3) return 1;

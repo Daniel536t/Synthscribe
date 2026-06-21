@@ -105,8 +105,15 @@ export default function Project() {
       />
       
       <div className="mb-12 text-center space-y-4">
-        <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-bold uppercase tracking-widest text-sm mb-4">
-          {project?.vibe} Vibe
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-bold uppercase tracking-widest text-sm">
+            {project?.vibe} Vibe
+          </div>
+          {project?.renderMode === "note_for_note" && (
+            <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-primary text-primary-foreground font-bold uppercase tracking-widest text-sm" data-testid="badge-note-for-note">
+              Note-for-Note
+            </div>
+          )}
         </div>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight">{project?.title}</h1>
         {project?.theme && (

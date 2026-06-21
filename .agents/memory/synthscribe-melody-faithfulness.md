@@ -31,10 +31,31 @@ The product pivoted to **real singing**. As of the "Sung songs with AI lyrics" w
 3. Song length is sized to the lyrics (~2 words/sec, clamped to ElevenLabs'
    10–60s window), not to hum length, when lyrics are present.
 
-**How to apply:** keep `transcribe.py`/`transcribe.ts` for key/tempo only. Do not
-re-add hum-into-final mixing or a resynth lead (see history below). `lyrics` is a
-nullable column on `projects` and a field on CreateProjectRequest/Project in
-`openapi.yaml`.
+**How to apply:** keep `transcribe.py`/`transcribe.ts` for key/tempo only. `lyrics`
+is a nullable column on `projects` and a field on CreateProjectRequest/Project in
+`openapi.yaml`. For the default (`structural`) mode, do not re-add hum-into-final
+mixing or a synth resynth lead (see history below).
+
+# Option 2 "Note-for-Note" — opt-in, additive (does NOT replace the above)
+
+There is now a SECOND render mode selectable via `renderMode`
+(`structural` default | `note_for_note`) — column on `projects`, `RenderMode` enum
+in `openapi.yaml`, validated by a `RENDER_MODES` set in `routes/projects.ts`. When
+`note_for_note` AND lyrics AND notes>0, `pipeline.ts` renders a lead vocal that
+sings the user's words on the EXACT hummed pitches/timing, mixed over the
+ElevenLabs backing. ANY failure logs + falls back to Option 1 (`generateSong`).
+- This is NOT the rejected synth resynth lead: the voice is real (ElevenLabs
+  TTS-with-timestamps), only pitch/time-CONFORMED to the hum, not synthesized.
+- Rendering is a **LOCAL librosa worker** `retune.py` (per-segment pyin → pitch_shift
+  to target MIDI → time_stretch to note dur → place at note start), NOT Modal/GPU —
+  pitch/time conform needs no GPU and local avoids Modal deploy fragility +
+  silent-fallback masking. Verify exactness on the ISOLATED worker (synthetic tone →
+  targets, measure back with pyin), NOT the final mix — backing bass dominates
+  full-mix pitch detection and hides the lead.
+- `buildSegments` (`singing.ts`): 1 syllable→1 hummed note in order; if syllables >
+  notes the melody CYCLES (reuses real hummed pitches/durations) — never fabricate a
+  flat last-pitch tail; if syllables < notes, trailing notes go unsung.
+- No public UI toggle yet — only a "Note-for-Note" badge on Project/Library when set.
 
 # HISTORY (older approaches, do not revert to these)
 

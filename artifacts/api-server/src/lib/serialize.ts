@@ -19,6 +19,7 @@ export function toProject(row: ProjectRow) {
     lyrics: row.lyrics,
     length: row.length,
     engine: row.engine,
+    renderMode: row.renderMode,
     stage: row.stage,
     progress: row.progress,
     key: row.key,

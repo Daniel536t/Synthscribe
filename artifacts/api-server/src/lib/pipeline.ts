@@ -6,9 +6,11 @@ import {
   normalizeHum,
   toWav,
   getDurationSeconds,
+  mixAndMaster,
 } from "./audio";
 import { transcribeHum } from "./transcribe";
 import { generateBacking, generateSong } from "./elevenlabs";
+import { renderNoteForNoteVocal } from "./singing";
 import { draftLyrics } from "./lyrics";
 import { nvidiaConfigured } from "./nvidia";
 
@@ -152,34 +154,91 @@ export async function runPipeline(projectId: string): Promise<void> {
     // "Original Hum" stem, but it is NOT layered into the final track. When the
     // user supplied lyrics we ask ElevenLabs for a full song that sings those
     // words; otherwise we fall back to a wordless instrumental in the vibe.
-    let songRaw: Buffer;
-    if (hasLyrics) {
-      await patch(projectId, {
-        stage: "singing",
-        progress: 60,
-        message: "Singing your lyrics",
-      });
-      songRaw = await generateSong({
-        vibe: project.vibe,
-        key,
-        tempo,
-        lyrics,
-        lengthMs: targetDuration * 1000,
-      });
-    } else {
-      await patch(projectId, {
-        stage: "generating_backing",
-        progress: 60,
-        message: "Producing your track",
-      });
-      songRaw = await generateBacking({
-        vibe: project.vibe,
-        key,
-        tempo,
-        lengthMs: targetDuration * 1000,
-      });
+    let song: Buffer | null = null;
+
+    // Option 2 — note-for-note. When this project asked for it (and we have both
+    // lyrics and a transcribed melody) we render a lead vocal that sings the
+    // words on the EXACT hummed pitches/timing, then mix it over a key/tempo/vibe
+    // backing. Any failure falls through to the Option 1 path below so the user
+    // still gets a finished song.
+    if (
+      project.renderMode === "note_for_note" &&
+      hasLyrics &&
+      transcription.notes.length > 0
+    ) {
+      try {
+        await patch(projectId, {
+          stage: "singing",
+          progress: 55,
+          message: "Singing your exact melody",
+        });
+        const lead = await renderNoteForNoteVocal({
+          lyrics,
+          notes: transcription.notes,
+        });
+        await patch(projectId, {
+          stage: "generating_backing",
+          progress: 75,
+          message: "Producing the backing",
+        });
+        const backingRaw = await generateBacking({
+          vibe: project.vibe,
+          key,
+          tempo,
+          lengthMs: targetDuration * 1000,
+        });
+        const leadWav = await toWav(lead);
+        const backingWav = await toWav(backingRaw);
+        song = await mixAndMaster([
+          { buffer: backingWav, gain: 0.7 },
+          { buffer: leadWav, gain: 1.0, reverb: true, fadeInSeconds: 0.05 },
+        ]);
+        log.info("Rendered note-for-note (Option 2) song");
+      } catch (err) {
+        log.warn(
+          { err },
+          "Note-for-note render failed; falling back to structural song",
+        );
+        await patch(projectId, {
+          message:
+            "Couldn't sing your exact melody — producing a studio version instead",
+        });
+        song = null;
+      }
     }
-    const song = await toWav(songRaw);
+
+    // Option 1 (structural) and the instrumental-only path. Also the fallback
+    // target if Option 2 above could not complete.
+    if (song === null) {
+      let songRaw: Buffer;
+      if (hasLyrics) {
+        await patch(projectId, {
+          stage: "singing",
+          progress: 60,
+          message: "Singing your lyrics",
+        });
+        songRaw = await generateSong({
+          vibe: project.vibe,
+          key,
+          tempo,
+          lyrics,
+          lengthMs: targetDuration * 1000,
+        });
+      } else {
+        await patch(projectId, {
+          stage: "generating_backing",
+          progress: 60,
+          message: "Producing your track",
+        });
+        songRaw = await generateBacking({
+          vibe: project.vibe,
+          key,
+          tempo,
+          lengthMs: targetDuration * 1000,
+        });
+      }
+      song = await toWav(songRaw);
+    }
 
     // 3. Master & store ---------------------------------------------------
     await patch(projectId, {

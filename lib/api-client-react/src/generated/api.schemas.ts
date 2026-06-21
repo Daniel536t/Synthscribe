@@ -67,6 +67,17 @@ export const EngineChoice = {
 } as const;
 
 /**
+ * Which render path produces the lead vocal. "structural" (the default, "Option 1") lets ElevenLabs invent a melody in the hum's key/tempo/vibe while singing the lyrics. "note_for_note" ("Option 2") makes the lead vocal sing the lyrics on the EXACT hummed pitches and timing. Option 2 is currently selectable only for internal evaluation and falls back to Option 1 if its renderer is unavailable.
+ */
+export type RenderMode = typeof RenderMode[keyof typeof RenderMode];
+
+
+export const RenderMode = {
+  structural: 'structural',
+  note_for_note: 'note_for_note',
+} as const;
+
+/**
  * Current stage of the hum-to-song pipeline.
  */
 export type PipelineStage = typeof PipelineStage[keyof typeof PipelineStage];
@@ -91,6 +102,7 @@ export interface CreateProjectRequest {
   lyrics?: string;
   length?: SongLength;
   engine?: EngineChoice;
+  renderMode?: RenderMode;
 }
 
 /**
@@ -123,6 +135,7 @@ export interface Project {
   lyrics?: string | null;
   length?: SongLength;
   engine: Engine;
+  renderMode?: RenderMode;
   stage: PipelineStage;
   /** Coarse progress percentage (0-100). */
   progress: number;
