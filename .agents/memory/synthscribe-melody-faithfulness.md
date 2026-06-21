@@ -13,15 +13,21 @@ The product pivoted to **real singing**. As of the "Sung songs with AI lyrics" w
    Hum" stem/keepsake, but `mixAndMaster`/hum-layering was removed from
    `pipeline.ts`. backing/vocals stem paths are now null; the single ElevenLabs
    call is the full final track.
-2. **Lyrics = user-written ("Option B").** The user types lyrics in a textarea on
-   Home; ElevenLabs sings those exact words via `generateSong()` in
-   `elevenlabs.ts`. If lyrics are blank, it falls back to an instrumental
+2. **Lyrics = user-written OR AI-drafted from the hum.** The user can type lyrics
+   in a textarea on Home; ElevenLabs sings those exact words via `generateSong()`
+   in `elevenlabs.ts`. If lyrics are blank, it falls back to an instrumental
    (`generateBacking`).
-   **Why Option B and not AI-drafted lyrics:** AI drafting (OpenAI via Replit AI
-   Integrations) was blocked by Replit **phone verification** the user couldn't
-   complete; user chose to write lyrics themselves rather than verify or supply an
-   OpenAI key. If revisiting AI lyric drafting, the blocker is account-level phone
-   verification, not code.
+   **AI lyric drafting is now implemented (supersedes "Option B only"):** the hum's
+   extracted melody notes build a per-line syllable scaffold (`lib/lyrics.ts`),
+   then a **user-supplied NVIDIA-hosted Mistral** model drafts theme-based lyrics
+   shaped to that scaffold (`lib/nvidia.ts`, OpenAI-compatible at
+   integrate.api.nvidia.com/v1; env NVIDIA_API_KEY, override NVIDIA_BASE_URL /
+   NVIDIA_MODEL). A `theme` column on `projects` + a `What's it about?` field drive
+   it. UI: standalone `POST /api/lyrics/draft` (re-uploads hum) behind the "Write
+   from my hum" button; `pipeline.ts` also auto-drafts when theme && !lyrics.
+   **Why NVIDIA and not OpenAI:** OpenAI via Replit AI Integrations was blocked by
+   Replit phone verification the user couldn't complete; they supplied an NVIDIA
+   key instead. Drafting is OFF (503) when NVIDIA_API_KEY is unset.
 3. Song length is sized to the lyrics (~2 words/sec, clamped to ElevenLabs'
    10–60s window), not to hum length, when lyrics are present.
 

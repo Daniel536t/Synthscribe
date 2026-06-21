@@ -196,12 +196,20 @@ async function repairLines(
   scaffold: Scaffold,
   theme: string,
 ): Promise<string[]> {
-  let working = [...lines];
+  // Force the array to have exactly one slot per scaffold line: pad short
+  // outputs with blanks (to be written) and drop any extra lines the model
+  // produced beyond the melody.
+  let working = scaffold.lines.map((_, idx) => (lines[idx] ?? "").trim());
+
   for (let pass = 0; pass < MAX_REPAIR_PASSES; pass++) {
+    // A line is an offender if it is missing entirely or off its syllable target.
     const offenders: number[] = [];
-    working.forEach((line, idx) => {
-      const target = scaffold.lines[idx];
-      if (!target) return;
+    scaffold.lines.forEach((target, idx) => {
+      const line = working[idx];
+      if (!line) {
+        offenders.push(idx);
+        return;
+      }
       const got = countLineSyllables(line);
       if (Math.abs(got - target.syllables) > SYLLABLE_TOLERANCE) {
         offenders.push(idx);
@@ -212,8 +220,12 @@ async function repairLines(
     const fixList = offenders
       .map((idx) => {
         const target = scaffold.lines[idx];
-        const got = countLineSyllables(working[idx]);
-        return `Line ${idx + 1} (currently ${got} syllables, needs exactly ${target.syllables}): "${working[idx]}"`;
+        const line = working[idx];
+        if (!line) {
+          return `Line ${idx + 1} (MISSING — write a new line of exactly ${target.syllables} syllables that fits the song)`;
+        }
+        const got = countLineSyllables(line);
+        return `Line ${idx + 1} (currently ${got} syllables, needs exactly ${target.syllables}): "${line}"`;
       })
       .join("\n");
 
@@ -223,11 +235,11 @@ async function repairLines(
           {
             role: "system",
             content:
-              "You are a precise lyric editor. Rewrite only the requested lines so each has the EXACT requested syllable count, keeping the same meaning, rhyme, and theme. Reply with one rewritten line per requested line, in the same order, and nothing else.",
+              "You are a precise lyric editor. Rewrite or write the requested lines so each has the EXACT requested syllable count, keeping the same meaning, rhyme, and theme. Reply with one line per requested line, in the same order, and nothing else.",
           },
           {
             role: "user",
-            content: `Theme: ${theme}\n\nRewrite these lines to their exact syllable counts:\n${fixList}`,
+            content: `Theme: ${theme}\n\nProvide these lines at their exact syllable counts:\n${fixList}`,
           },
         ],
         { temperature: 0.6, maxTokens: 400 },
@@ -282,11 +294,26 @@ export async function draftLyrics(opts: {
     { temperature: 0.85, maxTokens: 700 },
   );
 
-  let lines = parseLines(content, scaffold.lines.length);
-  if (lines.length === 0) {
+  const parsed = parseLines(content, scaffold.lines.length);
+  if (parsed.length === 0) {
     throw new Error("Model returned no usable lyric lines");
   }
-  lines = await repairLines(lines, scaffold, opts.theme);
+  // repairLines returns exactly one slot per scaffold line; it fills missing
+  // lines and fixes off-target syllable counts.
+  const lines = await repairLines(parsed, scaffold, opts.theme);
+
+  // The whole point is that one sung line maps to one melodic phrase, so the
+  // output must cover every scaffold line. If any slot is still blank after
+  // repair, the lyrics would not align with the hum — fail so the caller can
+  // fall back instead of returning a malformed song.
+  if (
+    lines.length !== scaffold.lines.length ||
+    lines.some((l) => l.trim().length === 0)
+  ) {
+    throw new Error(
+      `Drafted lyrics did not match the melody (${lines.filter((l) => l.trim()).length}/${scaffold.lines.length} lines)`,
+    );
+  }
 
   return { lyrics: lines.join("\n"), lineCount: lines.length };
 }
