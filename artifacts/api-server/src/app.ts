@@ -1,16 +1,16 @@
 import express, { Request, Response } from "express";
-import * as pinoHttp from "pino-http";
 
 const app = express();
 
-// SAFE fallback for Vercel + TS builds
-const logger = (pinoHttp as any).default?.() ?? (pinoHttp as any)();
-
 app.use(express.json());
-app.use(logger);
+
+// REMOVE pino-http for Vercel stability
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Synthscribe API running");
+  res.json({
+    status: "ok",
+    message: "Synthscribe API running on Vercel"
+  });
 });
 
 export default app;
