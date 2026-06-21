@@ -177,28 +177,118 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    background-image: radial-gradient(circle at top right, rgba(138, 43, 226, 0.1), transparent 40%),
-                      radial-gradient(circle at bottom left, rgba(255, 20, 147, 0.1), transparent 40%);
+    background-image:
+      radial-gradient(60rem 60rem at 85% -10%, hsl(var(--primary) / 0.16), transparent 60%),
+      radial-gradient(50rem 50rem at -10% 110%, hsl(var(--secondary) / 0.16), transparent 60%),
+      radial-gradient(45rem 45rem at 50% 50%, hsl(var(--accent) / 0.08), transparent 60%);
     background-attachment: fixed;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.7);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }
 
 @layer utilities {
+  /* Unified frosted-glass surface used for every elevated panel. The inset
+     highlight + ring gives a consistent crisp edge in both themes. */
   .glass-panel {
-    @apply bg-card/60 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl;
+    @apply bg-card/55 backdrop-blur-xl border border-white/25 dark:border-white/10 shadow-xl;
+    box-shadow:
+      var(--shadow-lg),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
   }
-  
+
+  /* Lighter-weight glass for cards/tiles inside a page. */
+  .glass-card {
+    @apply bg-card/45 backdrop-blur-md border border-white/15 dark:border-white/10;
+    box-shadow:
+      var(--shadow),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  }
+
+  /* A 1px gradient hairline divider that matches the brand. */
+  .hairline {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--primary) / 0.3),
+      hsl(var(--secondary) / 0.3),
+      transparent
+    );
+  }
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent;
   }
-  
+
   .blob-shape {
     border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
     animation: blob-bounce 8s infinite alternate;
   }
-  
+
   @keyframes blob-bounce {
     0% { transform: scale(1) translate(0, 0); }
     100% { transform: scale(1.1) translate(20px, -20px); }
+  }
+
+  /* CSS echo of the 3D Resonance orb — see OrbMark.tsx. */
+  .orb-mark {
+    border-radius: 9999px;
+    background:
+      radial-gradient(circle at 32% 28%, hsl(var(--primary) / 0.95), transparent 62%),
+      radial-gradient(circle at 72% 76%, hsl(var(--secondary) / 0.9), transparent 62%),
+      radial-gradient(circle at 60% 42%, hsl(var(--accent) / 0.65), transparent 66%);
+    filter: blur(3px);
+    animation: orb-breathe 6s ease-in-out infinite;
+  }
+
+  .orb-mark-ring {
+    border-radius: 9999px;
+    background:
+      conic-gradient(
+        from 0deg,
+        hsl(var(--primary) / 0.4),
+        hsl(var(--secondary) / 0.4),
+        hsl(var(--accent) / 0.4),
+        hsl(var(--primary) / 0.4)
+      );
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+    opacity: 0.55;
+  }
+
+  .orb-mark-spin {
+    animation: orb-spin 14s linear infinite;
+  }
+
+  @keyframes orb-breathe {
+    0%, 100% { transform: scale(0.96); opacity: 0.85; }
+    50% { transform: scale(1.04); opacity: 1; }
+  }
+
+  @keyframes orb-spin {
+    to { transform: rotate(360deg); }
   }
 }
