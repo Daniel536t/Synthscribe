@@ -1,34 +1,16 @@
-import express, { type Express } from "express";
-import cors from "cors";
-import pinoHttp from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import express, { Request, Response } from "express";
+import * as pinoHttp from "pino-http";
 
-const app: Express = express();
+const app = express();
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
-app.use(cors());
+// FIX: pino-http is a factory function in this form
+const logger = pinoHttp();
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(logger);
 
-app.use("/api", router);
+app.get("/", (req: Request, res: Response) => {
+  res.send("Synthscribe API is running");
+});
 
 export default app;
