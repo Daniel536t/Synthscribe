@@ -39,6 +39,33 @@ async function patch(projectId: string, fields: PatchFields): Promise<void> {
 
 const DEFAULT_DURATION = 24; // seconds for generated stems
 
+// Target song length (seconds) per user choice. ElevenLabs supports up to 5min.
+const LENGTH_SECONDS: Record<string, number> = {
+  short: 30,
+  standard: 90,
+  long: 180,
+};
+
+function computeTargetDuration({
+  length,
+  hasLyrics,
+  wordCount,
+}: {
+  length: string;
+  hasLyrics: boolean;
+  wordCount: number;
+}): number {
+  const base = LENGTH_SECONDS[length] ?? LENGTH_SECONDS.standard;
+  if (hasLyrics) {
+    // Make sure there is room to sing every word (~2 words/sec) plus an intro,
+    // but never shorter than the chosen length. Cap at the ElevenLabs max.
+    const wordsNeed = Math.round(wordCount / 2) + 8;
+    return Math.min(300, Math.max(base, wordsNeed));
+  }
+  // Instrumental: simply honour the chosen length.
+  return Math.min(300, base);
+}
+
 export async function runPipeline(projectId: string): Promise<void> {
   const log = logger.child({ projectId });
   try {
@@ -70,15 +97,16 @@ export async function runPipeline(projectId: string): Promise<void> {
     const transcription = await transcribeHum(hum);
     const key = transcription.key ?? "C major";
     const tempo = transcription.tempo ?? 90;
-    const humDuration = transcription.durationSeconds ?? (await getDurationSeconds(hum));
     const lyrics = project.lyrics?.trim() || "";
     const hasLyrics = lyrics.length > 0;
-    // With lyrics we need enough room to sing every word (~2 words/sec), clamped
-    // to the ElevenLabs 10-60s window. Without lyrics we fall back to a short
-    // instrumental sized off the hum.
-    const targetDuration = hasLyrics
-      ? Math.max(20, Math.min(60, Math.round(lyrics.split(/\s+/).length / 2) + 8))
-      : Math.max(24, Math.min(Math.round(humDuration * 3) || DEFAULT_DURATION, 30));
+    // The user picks a target length (Short/Standard/Long); we honour it while
+    // making sure a sung track still has room for every word (~2 words/sec) so
+    // lyrics are never cut off. Everything is clamped to the ElevenLabs window.
+    const targetDuration = computeTargetDuration({
+      length: project.length,
+      hasLyrics,
+      wordCount: hasLyrics ? lyrics.split(/\s+/).filter(Boolean).length : 0,
+    });
     log.info(
       { key, tempo, noteCount: transcription.notes.length },
       "Hum transcribed",

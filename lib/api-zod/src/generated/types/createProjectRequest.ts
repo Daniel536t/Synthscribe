@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { EngineChoice } from './engineChoice';
+import type { SongLength } from './songLength';
 import type { Vibe } from './vibe';
 
 export interface CreateProjectRequest {
@@ -13,5 +14,6 @@ export interface CreateProjectRequest {
   vibe: Vibe;
   /** Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead. */
   lyrics?: string;
+  length?: SongLength;
   engine?: EngineChoice;
 }

@@ -10,21 +10,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Sparkles, Wand2, Loader2, Headphones, Flower2, Heart, Piano, Guitar, Drum, Radio } from "lucide-react";
+import { Music, Sparkles, Wand2, Loader2, Headphones, Flower2, Heart, Piano, Guitar, Drum, Radio, Clock, Mic2 } from "lucide-react";
 import AudioRecorder from "@/components/AudioRecorder";
+import Resonance from "@/components/Resonance";
 import { formatDistanceToNow } from "date-fns";
 import { Link } from "wouter";
+
+const LENGTH_VALUES = ["short", "standard", "long"] as const;
 
 const formSchema = z.object({
   title: z.string().optional(),
   vibe: z.nativeEnum(Vibe),
   lyrics: z.string().optional(),
+  length: z.enum(LENGTH_VALUES),
 });
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-  
+
   const createProject = useCreateProject();
   const uploadHum = useUploadHum();
   const startGeneration = useStartGeneration();
@@ -36,8 +40,13 @@ export default function Home() {
       title: "",
       vibe: "pop",
       lyrics: "",
+      length: "standard",
     },
   });
+
+  const selectedVibe = form.watch("vibe");
+  const lyricsValue = form.watch("lyrics");
+  const hasLyrics = !!lyricsValue?.trim();
 
   const isSubmitting = createProject.isPending || uploadHum.isPending || startGeneration.isPending;
 
@@ -48,25 +57,22 @@ export default function Home() {
     }
 
     try {
-      // 1. Create project
       const project = await createProject.mutateAsync({
         data: {
           title: values.title || "My Hummed Melody",
           vibe: values.vibe,
           lyrics: values.lyrics?.trim() || undefined,
+          length: values.length,
         }
       });
 
-      // 2. Upload hum
       await uploadHum.mutateAsync({
         projectId: project.id,
         data: { file: recordedBlob }
       });
 
-      // 3. Start generation
       await startGeneration.mutateAsync({ projectId: project.id });
 
-      // 4. Navigate to project studio view
       setLocation(`/projects/${project.id}`);
     } catch (error) {
       console.error("Failed to process melody:", error);
@@ -90,11 +96,17 @@ export default function Home() {
     { value: "synthwave", label: "Synthwave", icon: <Radio className="w-5 h-5" />, color: "bg-fuchsia-500" },
   ];
 
+  const lengths: { value: (typeof LENGTH_VALUES)[number]; label: string; hint: string }[] = [
+    { value: "short", label: "Short", hint: "~30 sec" },
+    { value: "standard", label: "Standard", hint: "~90 sec" },
+    { value: "long", label: "Long", hint: "up to 3 min" },
+  ];
+
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="text-center mb-16 space-y-4">
-        <div className="inline-flex items-center justify-center p-3 mb-4 rounded-3xl bg-primary/10 text-primary blob-shape">
-          <Wand2 className="w-8 h-8" />
+        <div className="mx-auto mb-2 h-56 w-56 md:h-64 md:w-64">
+          <Resonance vibe={selectedVibe} className="h-full w-full" />
         </div>
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
           Hum a melody.<br/>
@@ -168,7 +180,54 @@ export default function Home() {
                           {...field}
                         />
                       </FormControl>
-                      <p className="text-sm text-muted-foreground">ElevenLabs will sing these words in the key &amp; tempo of your hum.</p>
+                      <div
+                        className={`flex items-center gap-2 text-sm font-medium rounded-xl px-3 py-2 ${
+                          hasLyrics
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted/60 text-muted-foreground"
+                        }`}
+                      >
+                        {hasLyrics ? <Mic2 className="w-4 h-4 shrink-0" /> : <Music className="w-4 h-4 shrink-0" />}
+                        <span>
+                          {hasLyrics
+                            ? "These words will be sung in the key & tempo of your hum."
+                            : "No lyrics yet — you'll get an instrumental track."}
+                        </span>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="length"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base font-semibold mb-3 flex items-center gap-2">
+                        <Clock className="w-4 h-4" /> Song length
+                      </FormLabel>
+                      <FormControl>
+                        <div className="grid grid-cols-3 gap-3">
+                          {lengths.map((l) => (
+                            <button
+                              type="button"
+                              key={l.value}
+                              onClick={() => field.onChange(l.value)}
+                              data-testid={`length-${l.value}`}
+                              className={`rounded-2xl border-2 p-4 text-center transition-all duration-200 ${
+                                field.value === l.value
+                                  ? "border-primary bg-primary/10 shadow-md shadow-primary/20 scale-[1.02]"
+                                  : "border-transparent bg-muted/50 hover:bg-muted"
+                              }`}
+                            >
+                              <div className="font-bold">{l.label}</div>
+                              <div className="text-xs text-muted-foreground mt-1">{l.hint}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </FormControl>
+                      <p className="text-sm text-muted-foreground">Longer songs take a little more time and credits to produce.</p>
                       <FormMessage />
                     </FormItem>
                   )}

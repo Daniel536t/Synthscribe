@@ -190,6 +190,13 @@ components:
         - folk
         - afrobeat
         - synthwave
+    SongLength:
+      type: string
+      description: How long the generated song should be. "short" ≈ 30s, "standard" ≈ 90s, "long" ≈ 3 minutes. Longer songs take more time and credits to produce.
+      enum:
+        - short
+        - standard
+        - long
     Engine:
       type: string
       description: Which engine produced the backing track. "elevenlabs" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. "musicgen", "arranger", and "gpu" are legacy values kept only so older projects still deserialize; they are no longer offered.
@@ -224,6 +231,8 @@ components:
         lyrics:
           type: string
           description: Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead.
+        length:
+          $ref: "#/components/schemas/SongLength"
         engine:
           $ref: "#/components/schemas/EngineChoice"
       required:
@@ -257,6 +266,8 @@ components:
         lyrics:
           type: [string, "null"]
           description: The lyrics ElevenLabs sang for this song, if any.
+        length:
+          $ref: "#/components/schemas/SongLength"
         engine:
           $ref: "#/components/schemas/Engine"
         stage:

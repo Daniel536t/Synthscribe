@@ -25,6 +25,7 @@ export const ListProjectsResponseItem = zod.object({
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
+  "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
@@ -51,6 +52,7 @@ export const CreateProjectBody = zod.object({
   "title": zod.string().optional(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
   "lyrics": zod.string().optional().describe('Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead.'),
+  "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['elevenlabs']).optional().describe('Engine used when creating a project. SynthScribe currently offers only ElevenLabs Music; legacy values (\"musicgen\", \"arranger\", \"gpu\") are not accepted for new projects.')
 })
 
@@ -67,6 +69,7 @@ export const GetProjectResponse = zod.object({
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
+  "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),
@@ -102,6 +105,7 @@ export const UploadHumResponse = zod.object({
   "title": zod.string(),
   "vibe": zod.enum(['lofi', 'cinematic', 'pop', 'rnb', 'electronic', 'acoustic', 'ambient', 'serenity', 'soul', 'jazz', 'folk', 'afrobeat', 'synthwave']).describe('The musical mood\/genre direction for the backing track.'),
   "lyrics": zod.string().nullish().describe('The lyrics ElevenLabs sang for this song, if any.'),
+  "length": zod.enum(['short', 'standard', 'long']).optional().describe('How long the generated song should be. \"short\" ≈ 30s, \"standard\" ≈ 90s, \"long\" ≈ 3 minutes. Longer songs take more time and credits to produce.'),
   "engine": zod.enum(['musicgen', 'elevenlabs', 'arranger', 'gpu']).describe('Which engine produced the backing track. \"elevenlabs\" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. \"musicgen\", \"arranger\", and \"gpu\" are legacy values kept only so older projects still deserialize; they are no longer offered.'),
   "stage": zod.enum(['draft', 'transcribing', 'generating_backing', 'singing', 'mixing', 'complete', 'error']).describe('Current stage of the hum-to-song pipeline.'),
   "progress": zod.number().describe('Coarse progress percentage (0-100).'),

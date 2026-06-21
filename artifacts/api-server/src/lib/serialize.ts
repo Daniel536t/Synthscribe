@@ -16,6 +16,7 @@ export function toProject(row: ProjectRow) {
     title: row.title,
     vibe: row.vibe,
     lyrics: row.lyrics,
+    length: row.length,
     engine: row.engine,
     stage: row.stage,
     progress: row.progress,

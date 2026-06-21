@@ -7,6 +7,7 @@ export const projectsTable = pgTable("projects", {
   title: text("title").notNull(),
   vibe: text("vibe").notNull(),
   lyrics: text("lyrics"),
+  length: text("length").notNull().default("standard"),
   engine: text("engine").notNull().default("elevenlabs"),
   stage: text("stage").notNull().default("draft"),
   progress: integer("progress").notNull().default(0),

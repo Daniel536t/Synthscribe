@@ -39,9 +39,11 @@ async function postMusic(prompt: string, lengthMs: number): Promise<Buffer> {
     },
     body: JSON.stringify({
       prompt,
-      music_length_ms: Math.max(10000, Math.min(lengthMs, 60000)),
+      // ElevenLabs Music supports 10s–5min per generation. We size the request
+      // upstream (vibe/lyrics/length choice) and just enforce the hard bounds here.
+      music_length_ms: Math.max(10000, Math.min(lengthMs, 300000)),
     }),
-    signal: AbortSignal.timeout(180_000),
+    signal: AbortSignal.timeout(300_000),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");

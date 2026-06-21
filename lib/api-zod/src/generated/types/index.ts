@@ -15,5 +15,6 @@ export * from './healthStatus';
 export * from './pipelineStage';
 export * from './project';
 export * from './projectStatus';
+export * from './songLength';
 export * from './uploadHumBody';
 export * from './vibe';

@@ -1,29 +1,33 @@
-import { useGetProjectStatus, useGetProject, ProjectStatus } from "@workspace/api-client-react";
+import { useGetProjectStatus, useGetProject, getGetProjectQueryKey, getGetProjectStatusQueryKey } from "@workspace/api-client-react";
 import { useRoute } from "wouter";
-import { Loader2, CheckCircle2, AlertCircle, Sparkles, Download, Play, Mic, Waves } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Sparkles, Download, Play, Pause, Mic, Waves, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import Resonance from "@/components/Resonance";
+import { audioReactive } from "@/lib/audioReactive";
 
 export default function Project() {
   const [, params] = useRoute("/projects/:id");
   const id = params?.id;
 
   const { data: project } = useGetProject(id!, {
-    query: { enabled: !!id }
+    query: { enabled: !!id, queryKey: getGetProjectQueryKey(id!) }
   });
 
   const isFinished = project?.stage === "complete" || project?.stage === "error";
 
   const { data: status } = useGetProjectStatus(id!, {
-    query: { 
+    query: {
       enabled: !!id && !isFinished,
-      refetchInterval: 1500
+      refetchInterval: 1500,
+      queryKey: getGetProjectStatusQueryKey(id!)
     }
   });
 
   const [activeAudio, setActiveAudio] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const currentStage = status?.stage || project?.stage || "draft";
@@ -32,16 +36,35 @@ export default function Project() {
   const errorMsg = status?.error || project?.error;
   const audioUrls = status?.audio || project?.audio;
 
+  const startElementAnalyser = () => {
+    if (audioRef.current) {
+      audioReactive.connectElement(audioRef.current);
+    }
+  };
+
+  // Release the shared analyser when leaving the page so it doesn't stay
+  // "active" and suppress idle breathing on the next screen.
+  useEffect(() => {
+    return () => {
+      audioReactive.stop();
+    };
+  }, []);
+
   const playAudio = (url: string | null) => {
-    if (!url) return;
-    if (activeAudio === url && audioRef.current) {
-      if (audioRef.current.paused) audioRef.current.play();
-      else audioRef.current.pause();
-    } else {
-      if (audioRef.current) {
-        audioRef.current.src = url;
-        audioRef.current.play();
+    if (!url || !audioRef.current) return;
+    const el = audioRef.current;
+    el.crossOrigin = "anonymous";
+    if (activeAudio === url) {
+      if (el.paused) {
+        startElementAnalyser();
+        el.play();
+      } else {
+        el.pause();
       }
+    } else {
+      el.src = url;
+      startElementAnalyser();
+      el.play();
       setActiveAudio(url);
     }
   };
@@ -67,7 +90,19 @@ export default function Project() {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <audio ref={audioRef} onEnded={() => setActiveAudio(null)} />
+      <audio
+        ref={audioRef}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => {
+          setIsPlaying(false);
+          audioReactive.stop();
+        }}
+        onEnded={() => {
+          setIsPlaying(false);
+          setActiveAudio(null);
+          audioReactive.stop();
+        }}
+      />
       
       <div className="mb-12 text-center space-y-4">
         <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-primary/10 text-primary font-bold uppercase tracking-widest text-sm mb-4">
@@ -88,7 +123,11 @@ export default function Project() {
           {/* Main Player */}
           <div className="p-8 md:p-12 rounded-[2.5rem] glass-panel relative overflow-hidden group">
             <div className="absolute -inset-20 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 blur-3xl -z-10 opacity-50 group-hover:opacity-100 transition-opacity duration-1000" />
-            
+
+            <div className="mx-auto mb-8 h-56 w-56">
+              <Resonance vibe={project?.vibe} mode={isPlaying ? "playing" : "idle"} className="h-full w-full" />
+            </div>
+
             <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
               <Button 
                 size="icon" 
@@ -97,7 +136,11 @@ export default function Project() {
                 disabled={!audioUrls?.final}
                 data-testid="button-play-final"
               >
-                <Play className="w-10 h-10 ml-2" />
+                {isPlaying && activeAudio === audioUrls?.final ? (
+                  <Pause className="w-10 h-10" />
+                ) : (
+                  <Play className="w-10 h-10 ml-2" />
+                )}
               </Button>
               
               <div className="flex-1 space-y-6 text-center md:text-left">
@@ -120,6 +163,12 @@ export default function Project() {
                   {project?.durationSeconds && (
                     <div className="px-4 py-2 rounded-xl bg-background/50 backdrop-blur font-mono font-bold">
                       Duration: <span className="text-accent">{Math.floor(project.durationSeconds / 60)}:{(project.durationSeconds % 60).toString().padStart(2, '0')}</span>
+                    </div>
+                  )}
+                  {project?.length && (
+                    <div className="px-4 py-2 rounded-xl bg-background/50 backdrop-blur font-mono font-bold flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-primary" />
+                      <span className="capitalize text-primary">{project.length}</span>
                     </div>
                   )}
                 </div>
@@ -195,12 +244,10 @@ export default function Project() {
       ) : (
         <div className="max-w-2xl mx-auto space-y-12">
           <div className="text-center space-y-6">
-            <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-              <div className="absolute inset-0 border-4 border-primary/20 rounded-full animate-[spin_4s_linear_infinite]" />
-              <div className="absolute inset-2 border-4 border-t-primary rounded-full animate-[spin_2s_linear_infinite]" />
-              <Sparkles className="w-12 h-12 text-primary animate-pulse" />
+            <div className="mx-auto h-48 w-48">
+              <Resonance vibe={project?.vibe} mode="idle" className="h-full w-full" />
             </div>
-            
+
             <h2 className="text-3xl font-bold animate-pulse text-gradient">{message}</h2>
           </div>
 

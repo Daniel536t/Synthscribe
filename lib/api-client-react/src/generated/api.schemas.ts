@@ -32,6 +32,18 @@ export const Vibe = {
 } as const;
 
 /**
+ * How long the generated song should be. "short" ≈ 30s, "standard" ≈ 90s, "long" ≈ 3 minutes. Longer songs take more time and credits to produce.
+ */
+export type SongLength = typeof SongLength[keyof typeof SongLength];
+
+
+export const SongLength = {
+  short: 'short',
+  standard: 'standard',
+  long: 'long',
+} as const;
+
+/**
  * Which engine produced the backing track. "elevenlabs" (the ElevenLabs Music model) is the only engine SynthScribe currently uses. "musicgen", "arranger", and "gpu" are legacy values kept only so older projects still deserialize; they are no longer offered.
  */
 export type Engine = typeof Engine[keyof typeof Engine];
@@ -75,6 +87,7 @@ export interface CreateProjectRequest {
   vibe: Vibe;
   /** Lyrics the user wrote for the song. ElevenLabs sings these words over a backing in the chosen vibe. Optional — if omitted, an instrumental track is produced instead. */
   lyrics?: string;
+  length?: SongLength;
   engine?: EngineChoice;
 }
 
@@ -101,6 +114,7 @@ export interface Project {
      * @nullable
      */
   lyrics?: string | null;
+  length?: SongLength;
   engine: Engine;
   stage: PipelineStage;
   /** Coarse progress percentage (0-100). */

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Loader2, Waveform } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { audioReactive } from "@/lib/audioReactive";
 
 interface AudioRecorderProps {
   onRecordingComplete: (blob: Blob) => void;
@@ -13,16 +14,15 @@ export default function AudioRecorder({ onRecordingComplete, disabled }: AudioRe
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const recordingRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
   const [volume, setVolume] = useState(0);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (audioContextRef.current?.state !== "closed") {
-        audioContextRef.current?.close();
-      }
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      audioReactive.stop();
     };
   }, []);
 
@@ -33,20 +33,13 @@ export default function AudioRecorder({ onRecordingComplete, disabled }: AudioRe
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      const analyser = audioContextRef.current.createAnalyser();
-      analyser.fftSize = 256;
-      source.connect(analyser);
-      analyserRef.current = analyser;
+      // Feed the shared analyser so the 3D "Resonance" orb reacts to the hum.
+      await audioReactive.connectStream(stream);
 
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
       const updateVolume = () => {
-        if (!isRecording) return;
-        analyser.getByteFrequencyData(dataArray);
-        const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
-        setVolume(avg);
-        requestAnimationFrame(updateVolume);
+        if (!recordingRef.current) return;
+        setVolume(audioReactive.getLevel());
+        rafRef.current = requestAnimationFrame(updateVolume);
       };
 
       mediaRecorder.ondataavailable = (e) => {
@@ -57,17 +50,19 @@ export default function AudioRecorder({ onRecordingComplete, disabled }: AudioRe
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         onRecordingComplete(blob);
         stream.getTracks().forEach((track) => track.stop());
+        audioReactive.stop();
         setVolume(0);
       };
 
       mediaRecorder.start();
+      recordingRef.current = true;
       setIsRecording(true);
       setRecordingTime(0);
-      
+
       timerRef.current = window.setInterval(() => {
         setRecordingTime((prev) => prev + 1);
       }, 1000);
-      
+
       updateVolume();
     } catch (err) {
       console.error("Error accessing microphone:", err);
@@ -78,8 +73,10 @@ export default function AudioRecorder({ onRecordingComplete, disabled }: AudioRe
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
+      recordingRef.current = false;
       setIsRecording(false);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     }
   };
 
@@ -92,12 +89,12 @@ export default function AudioRecorder({ onRecordingComplete, disabled }: AudioRe
   return (
     <div className="flex flex-col items-center gap-6 p-8 rounded-3xl glass-panel relative overflow-hidden">
       {isRecording && (
-        <div 
-          className="absolute inset-0 bg-primary/5 transition-all duration-75"
-          style={{ transform: `scale(${1 + volume / 500})` }}
+        <div
+          className="absolute inset-0 bg-primary/5 transition-transform duration-75"
+          style={{ transform: `scale(${1 + volume * 0.8})` }}
         />
       )}
-      
+
       <div className="relative z-10 flex flex-col items-center gap-4">
         <Button
           size="icon"
@@ -115,7 +112,7 @@ export default function AudioRecorder({ onRecordingComplete, disabled }: AudioRe
             <Mic className="w-10 h-10" />
           )}
         </Button>
-        
+
         <div className="flex flex-col items-center">
           <span className={`text-3xl font-mono tracking-wider transition-colors ${isRecording ? "text-destructive font-bold" : "text-muted-foreground"}`}>
             {formatTime(recordingTime)}
